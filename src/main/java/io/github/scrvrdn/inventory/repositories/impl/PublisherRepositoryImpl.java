@@ -1,0 +1,158 @@
+package io.github.scrvrdn.inventory.repositories.impl;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.stereotype.Repository;
+
+import io.github.scrvrdn.inventory.domain.Publisher;
+import io.github.scrvrdn.inventory.repositories.PublisherRepository;
+
+@Repository
+public class PublisherRepositoryImpl implements PublisherRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+    
+    public PublisherRepositoryImpl(final JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @Override
+    public void create(Publisher publisher) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+        int affectedRows = jdbcTemplate.update(createPreparedStatementCreator(publisher), keyHolder);
+
+        Long id;
+        if (affectedRows > 0) {
+            id = keyHolder.getKey().longValue();
+        } else {
+            id = getExistingId(publisher);
+        }
+        
+        publisher.setId(id);
+    }
+
+    private PreparedStatementCreator createPreparedStatementCreator(Publisher publisher) {
+        String query = """
+                INSERT OR IGNORE INTO "publishers" ("name", "location")
+                VALUES (?, ?);
+                """;
+
+        return connection -> {
+            PreparedStatement ps = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, publisher.getName());
+            ps.setString(2, publisher.getLocation());
+            return ps;
+        };
+    }
+
+    private Long getExistingId(Publisher publisher) {
+        String query = """
+                SELECT "id" FROM "publishers"
+                WHERE "name" = ?
+                AND "location" = ?;
+                """;
+
+        return jdbcTemplate.queryForObject(
+            query,
+            Long.class,
+            publisher.getName(),
+            publisher.getLocation()
+        );
+    }
+
+    @Override
+    public Optional<Publisher> findById(long id) {
+        String query = """
+                SELECT * FROM "publishers" WHERE "id" = ?;
+                """;
+        List<Publisher> result = jdbcTemplate.query(query, new PublisherRowMapper(),id);
+        return result.stream().findFirst();
+    }
+
+    @Override
+    public List<Publisher> findAll() {
+        String query ="""
+                SELECT * FROM "publishers";
+                """;
+        return jdbcTemplate.query(query, new PublisherRowMapper());
+    }
+
+    @Override
+    public Map<Long, Publisher> findPublishersGroupedByBookId() {
+        String query = """
+                SELECT * FROM "publishers"
+                JOIN "published" ON "publishers"."id" = "published"."publisher_id";
+                """;
+
+        List<Entry<Long, Publisher>> result = jdbcTemplate.query(query, new PublisherByBookIdMapper());
+        return result.stream().collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    }
+
+
+
+    @Override
+    public void update(Publisher publisher) {
+        String query = """
+                UPDATE "publishers"
+                SET "name" = ?, "location" = ?
+                WHERE "id" = ?;
+                """;
+
+        jdbcTemplate.update(
+            query,
+            publisher.getName(),
+            publisher.getLocation(),
+            publisher.getId()
+        );
+    }
+
+    @Override
+    public void delete(long id) {
+        String query = """
+                DELETE FROM "publishers" WHERE "id" = ?;
+                """;
+        
+        jdbcTemplate.update(query, id);
+    }
+
+    
+
+    public static class PublisherRowMapper implements RowMapper<Publisher> {
+        @Override
+        public Publisher mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return Publisher.builder()
+                .id(rs.getLong("id"))
+                .name(rs.getString("name"))
+                .location(rs.getString("location"))
+                .build();
+        }
+    }
+
+    public static class PublisherByBookIdMapper implements RowMapper<Entry<Long, Publisher>> {
+        @Override
+        public Entry<Long, Publisher> mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return Map.entry(
+                rs.getLong("book_id"),
+                Publisher.builder()
+                    .id(rs.getLong("id"))
+                    .name(rs.getString("name"))
+                    .location(rs.getString("location"))
+                    .build()
+            );
+        }
+    }
+}
