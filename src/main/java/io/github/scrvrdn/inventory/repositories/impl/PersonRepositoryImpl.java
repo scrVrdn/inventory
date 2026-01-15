@@ -91,10 +91,12 @@ public class PersonRepositoryImpl implements PersonRepository {
     }
 
     @Override
-    public Map<Long, List<Person>> findAuthorsGroupedByBookId() {
+    public Map<Long, List<Person>> findAuthorsGroupedByBookId() {        
         String query = """
                 SELECT * FROM "persons"
-                JOIN "authored" ON "persons"."id" = "authored"."person_id";
+                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
+                WHERE "role" = 'AUTHOR'
+                ORDER BY "order_index";
                 """;
 
         List<Entry<Long, Person>> result = jdbcTemplate.query(query, new PersonByBookIdRowMapper());
@@ -110,7 +112,9 @@ public class PersonRepositoryImpl implements PersonRepository {
     public Map<Long, List<Person>> findEditorsGroupedByBookId() {
         String query = """
                 SELECT * FROM "persons"
-                JOIN "edited" ON "persons"."id" = "edited"."person_id";
+                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
+                WHERE "role" = 'EDITOR'
+                ORDER BY "order_index";
                 """;
         List<Entry<Long, Person>> result = jdbcTemplate.query(query, new PersonByBookIdRowMapper());
 

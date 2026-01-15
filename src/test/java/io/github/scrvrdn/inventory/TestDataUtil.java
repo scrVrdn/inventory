@@ -129,11 +129,9 @@ public final class TestDataUtil {
                     .shelfMark(entry.getBook().getShelfMark())
                     .authors(entry.getAuthors().stream()
                             .map(a -> a.getLastName() + ", " + a.getFirstNames())
-                            .sorted()
                             .collect(Collectors.joining("; ")))
                     .editors(entry.getEditors().stream()
                             .map(e -> e.getLastName() + ", " + e.getFirstNames())
-                            .sorted()
                             .collect(Collectors.joining("; ")))
                     .publisher(entry.getPublisher().getLocation() + ": " + entry.getPublisher().getName())
                     .build();

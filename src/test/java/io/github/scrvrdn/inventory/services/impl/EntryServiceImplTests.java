@@ -31,24 +31,18 @@ public class EntryServiceImplTests {
         String expectedSql = """
                 SELECT
                     b."id", b."title", b."year", b."shelf_mark",
-                    GROUP_CONCAT(a."author_name", '; ') AS "authors",
-                    GROUP_CONCAT(e."editor_name", '; ') AS "editors",                    
-                    p."location" || ': ' || p."name" AS "publisher"
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "authors",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"    
+                    ) AS "editors",
+                    "publishers"."location" || ': ' || "publishers"."name" AS "publisher"
                 FROM "books" b
-                LEFT JOIN (
-                    SELECT DISTINCT "book_id", "last_name" || ', ' || "first_names" AS "author_name"
-                    FROM "authored"
-                    JOIN "persons" ON "authored"."person_id" = "persons"."id"
-                    ORDER BY "author_name"
-                ) a ON b."id" = a."book_id"
-                LEFT JOIN (
-                    SELECT DISTINCT "book_id", "last_name" || ', ' || "first_names" AS "editor_name"
-                    FROM "edited"
-                    JOIN "persons" ON "edited"."person_id" = "persons"."id"
-                    ORDER BY "editor_name"
-                ) e ON b."id" = e."book_id"                
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
                 LEFT JOIN "published" ON b."id" = "published"."book_id"
-                LEFT JOIN "publishers" p ON "published"."publisher_id" = p."id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
                 WHERE b."id" = ?
                 GROUP BY b."id";
                 """;
@@ -63,24 +57,18 @@ public class EntryServiceImplTests {
         String expectedSql = """
                 SELECT
                     b."id", b."title", b."year", b."shelf_mark",
-                    GROUP_CONCAT(a."author_name", '; ') AS "authors",
-                    GROUP_CONCAT(e."editor_name", '; ') AS "editors",
-                    p."location" || ': ' || p."name" AS "publisher"
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "authors",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "editors",
+                    "publishers"."location" || ': ' || "publishers"."name" AS "publisher"
                 FROM "books" b
-                LEFT JOIN (
-                    SELECT DISTINCT "book_id", "last_name" || ', ' || "first_names" AS "author_name"
-                    FROM "authored"
-                    JOIN "persons" ON "authored"."person_id" = "persons"."id"
-                    ORDER BY "author_name"
-                ) a ON b."id" = a."book_id"
-                LEFT JOIN (
-                    SELECT DISTINCT "book_id", "last_name" || ', ' || "first_names" AS "editor_name"
-                    FROM "edited"
-                    JOIN "persons" ON "edited"."person_id" = "persons"."id"
-                    ORDER BY "editor_name"
-                ) e ON b."id" = e."book_id"
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
                 LEFT JOIN "published" ON b."id" = "published"."book_id"
-                LEFT JOIN "publishers" p ON "published"."publisher_id" = p."id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
                 GROUP BY b."id";
                 """;
 

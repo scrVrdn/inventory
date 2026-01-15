@@ -130,25 +130,28 @@ public class BookRepositoryImpl implements BookRepository {
     @Override
     public void assignToAuthor(Book book, List<Person> authors) {
         String query = """
-                INSERT INTO "authored" ("book_id", "person_id")
-                VALUES (?, ?);
+                INSERT INTO "book_person" ("book_id", "person_id", "role", "order_index")
+                VALUES (?, ?, ?, ?);
                 """;
-        
+        int i = 0;
         for (Person a : authors) {
             jdbcTemplate.update(
                 query,
                 book.getId(),
-                a.getId()
+                a.getId(),
+                "AUTHOR",
+                i++
             );
         }
     }
 
     @Override
     public List<Person> findAuthors(Book book) {
-        String query ="""
+        String query = """
                 SELECT "persons"."id", "last_name", "first_names" FROM "persons"
-                JOIN "authored" ON "persons"."id" = "authored"."person_id"
-                WHERE "authored"."book_id" = ?;
+                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
+                WHERE "role" = 'AUTHOR'
+                AND "book_id" = ?;
                 """;
         return jdbcTemplate.query(
             query,
@@ -165,15 +168,17 @@ public class BookRepositoryImpl implements BookRepository {
     @Override
     public void assignToEditor(Book book, List<Person> editors) {
         String query = """
-                INSERT INTO "edited" ("book_id", "person_id")
-                VALUES (?, ?);
+                INSERT INTO "book_person" ("book_id", "person_id", "role", "order_index")
+                VALUES (?, ?, ?, ?);
                 """;
-
+        int i = 0;
         for (Person e : editors) {
             jdbcTemplate.update(
                 query,
                 book.getId(),
-                e.getId()                
+                e.getId(),
+                "EDITOR",
+                i           
             );
         }
     }
@@ -182,10 +187,11 @@ public class BookRepositoryImpl implements BookRepository {
     public List<Person> findEditors(Book book) {
         String query = """
                 SELECT "persons"."id", "last_name", "first_names" FROM "persons"
-                JOIN "edited" ON "persons"."id" = "edited"."person_id"
-                WHERE "edited"."book_id" = ?;
+                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
+                WHERE "role" = 'EDITOR'
+                AND "book_id" = ?
+                ORDER BY "order_index";
                 """;
-
         return jdbcTemplate.query(
             query,
             new PersonRowMapper(),

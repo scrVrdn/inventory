@@ -91,10 +91,12 @@ public class PersonRepositoryImplTests {
     @Test
     public void testThatFindAuthorsByBookIdGeneratesCorrectSql() {
         underTest.findAuthorsGroupedByBookId();
-        
+
         String expectedSql = """
                 SELECT * FROM "persons"
-                JOIN "authored" ON "persons"."id" = "authored"."person_id";
+                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
+                WHERE "role" = 'AUTHOR'
+                ORDER BY "order_index";
                 """;
 
         verify(jdbcTemplate).query(
@@ -109,7 +111,9 @@ public class PersonRepositoryImplTests {
 
         String expectedSql = """
                 SELECT * FROM "persons"
-                JOIN "edited" ON "persons"."id" = "edited"."person_id";
+                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
+                WHERE "role" = 'EDITOR'
+                ORDER BY "order_index";
                 """;
 
         verify(jdbcTemplate).query(

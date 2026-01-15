@@ -24,16 +24,12 @@ CREATE TABLE IF NOT EXISTS "publishers" (
     UNIQUE("name", "location")
 );
 
-CREATE TABLE IF NOT EXISTS "authored" (
+DROP TABLE IF EXISTS "book_person";
+CREATE TABLE IF NOT EXISTS "book_person" (
     "book_id" INTEGER,
     "person_id" INTEGER,
-    FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE,
-    FOREIGN KEY("person_id") REFERENCES "persons"("id") ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS "edited" (
-    "book_id" INTEGER,
-    "person_id" INTEGER,
+    "role" TEXT CHECK("role" IN ('AUTHOR', 'EDITOR')),
+    "order_index" INTEGER DEFAULT 0,
     FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE,
     FOREIGN KEY("person_id") REFERENCES "persons"("id") ON DELETE CASCADE
 );
@@ -44,11 +40,3 @@ CREATE TABLE IF NOT EXISTS "published" (
     FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE,
     FOREIGN KEY("publisher_id") REFERENCES "publishers"("id") ON DELETE CASCADE
 );
-
--- CREATE VIEW IF NOT EXISTS "overview" AS
--- SELECT concat_ws(", ", a."last_name", a."first_names") AS "author", b."title", concat_ws(", ", e."last_name", e."first_names") AS "editor", b."location", b."year", b."shelfmark"
--- FROM "books" b
--- LEFT JOIN "authored" ON "books"."id" = "authored"."book_id"
--- LEFT JOIN "persons" a ON "authored"."person_id" = a."id"
--- LEFT JOIN "edited" ON "books"."id" = "edited"."book_id"
--- LEFT JOIN "persons" e ON "edited"."person_id" = e."id";

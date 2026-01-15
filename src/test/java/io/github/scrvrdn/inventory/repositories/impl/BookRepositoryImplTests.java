@@ -148,14 +148,15 @@ public class BookRepositoryImplTests {
         underTest.assignToAuthor(book, author);
         
         String expectedSql = """
-                INSERT INTO "authored" ("book_id", "person_id")
-                VALUES (?, ?);
+                INSERT INTO "book_person" ("book_id", "person_id", "role", "order_index")
+                VALUES (?, ?, ?, ?);
                 """;
-
         verify(jdbcTemplate).update(
             expectedSql,
             book.getId(),
-            author.getId()
+            author.getId(),
+            "AUTHOR",
+            0
         );
     }
 
@@ -170,14 +171,16 @@ public class BookRepositoryImplTests {
         underTest.assignToEditor(book, editor);
 
         String expectedSql = """
-                INSERT INTO "edited" ("book_id", "person_id")
-                VALUES (?, ?);
+                INSERT INTO "book_person" ("book_id", "person_id", "role", "order_index")
+                VALUES (?, ?, ?, ?);
                 """;
 
         verify(jdbcTemplate).update(
             expectedSql,
             book.getId(),
-            editor.getId()
+            editor.getId(),
+            "EDITOR",
+            0
         );
     }
 
@@ -211,8 +214,9 @@ public class BookRepositoryImplTests {
 
         String expectedSql = """
                 SELECT "persons"."id", "last_name", "first_names" FROM "persons"
-                JOIN "authored" ON "persons"."id" = "authored"."person_id"
-                WHERE "authored"."book_id" = ?;
+                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
+                WHERE "role" = 'AUTHOR'
+                AND "book_id" = ?;
                 """;
 
         verify(jdbcTemplate).query(
@@ -230,8 +234,10 @@ public class BookRepositoryImplTests {
 
         String expectedSql = """
                 SELECT "persons"."id", "last_name", "first_names" FROM "persons"
-                JOIN "edited" ON "persons"."id" = "edited"."person_id"
-                WHERE "edited"."book_id" = ?;
+                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
+                WHERE "role" = 'EDITOR'
+                AND "book_id" = ?
+                ORDER BY "order_index";
                 """;
 
         verify(jdbcTemplate).query(

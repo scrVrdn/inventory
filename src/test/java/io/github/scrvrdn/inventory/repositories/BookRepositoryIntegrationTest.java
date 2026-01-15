@@ -25,9 +25,6 @@ public class BookRepositoryIntegrationTest {
     private final PersonRepository personRepository;
     private final PublisherRepository publisherRepository;
 
-        @Autowired
-javax.sql.DataSource dataSource;
-
     @Autowired
     public BookRepositoryIntegrationTest(
                 final JdbcTemplate jdbcTemplate,
