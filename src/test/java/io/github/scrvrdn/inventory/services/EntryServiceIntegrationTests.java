@@ -11,8 +11,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.dto.EntryDto;
-import io.github.scrvrdn.inventory.dto.EntryRow;
+import io.github.scrvrdn.inventory.dto.FullEntryDto;
+import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,61 +34,60 @@ public class EntryServiceIntegrationTests {
     }
 
     @Test
-    public void testThatEntryCanBeCreatedAndRetrieved() {
-        EntryDto entry = TestDataUtil.createTestEntry();
+    public void testThatFullEntryDtoCanBeCreatedAndRetrieved() {
+        FullEntryDto entry = TestDataUtil.createTestEntry();
         entry.getAuthors().add(TestDataUtil.createTestPerson3());
         entry.getAuthors().add(TestDataUtil.createTestPerson4());
-        entry.getEditors().add(TestDataUtil.createTestPerson3());
+        entry.getEditors().add(TestDataUtil.createTestPerson4());
         underTest.create(entry);
-
-        List<EntryDto> result = underTest.findAll();
-        assertThat(result)
-            .hasSize(1)
-            .containsExactly(entry);
+        
+        Optional<FullEntryDto> result = underTest.findById(entry.getBook().getId());
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(entry);
     }
 
     @Test
-    public void testThatFindsAllEntries() {
+    public void testThatFindsAllFullEntryDtos() {
 
-        EntryDto entry1 = TestDataUtil.createTestEntry();
-        EntryDto entry2 = TestDataUtil.createTestEntry2();
+        FullEntryDto entry1 = TestDataUtil.createTestEntry();
+        FullEntryDto entry2 = TestDataUtil.createTestEntry2();
         entry1.getAuthors().add(TestDataUtil.createTestPerson3());
-        entry2.getAuthors().add(TestDataUtil.createTestPerson2());
+        entry2.getAuthors().add(TestDataUtil.createTestPerson());
         entry1.getAuthors().add(TestDataUtil.createTestPerson2());
         entry1.getAuthors().add(TestDataUtil.createTestPerson4());
         underTest.create(entry1);
         underTest.create(entry2);
 
-        List<EntryDto> result = underTest.findAll();
+        List<FullEntryDto> result = underTest.findAll();
         assertThat(result)
             .hasSize(2)
             .containsExactly(entry1, entry2);
     }
 
     @Test
-    public void testThatGetsEntryRow() {
-        EntryDto entry = TestDataUtil.createTestEntry();
+    public void testThatGetsFlatEntryDtos() {
+        FullEntryDto entry = TestDataUtil.createTestEntry();
         entry.getAuthors().add(TestDataUtil.createTestPerson3());
         entry.getEditors().add(TestDataUtil.createTestPerson4());
         underTest.create(entry);
-        EntryRow entryRow = TestDataUtil.createEntryRowFromEntry(entry);
+        FlatEntryDto entryRow = TestDataUtil.createEntryRowFromEntry(entry);
 
-        Optional<EntryRow> result = underTest.getEntryRow(entry.getBook().getId());
+        Optional<FlatEntryDto> result = underTest.getFlatEntryDto(entry.getBook().getId());
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(entryRow);
     }
 
     @Test
-    public void testThatGetsAllEntryRows() {
-        EntryDto entry1 = TestDataUtil.createTestEntry();
-        EntryDto entry2 = TestDataUtil.createTestEntry2();
+    public void testThatGetsAllFLatEntryDtos() {
+        FullEntryDto entry1 = TestDataUtil.createTestEntry();
+        FullEntryDto entry2 = TestDataUtil.createTestEntry2();
         entry1.getAuthors().add(TestDataUtil.createTestPerson3());
         underTest.create(entry1);
         underTest.create(entry2);
-        EntryRow entryRow1 = TestDataUtil.createEntryRowFromEntry(entry1);
-        EntryRow entryRow2 = TestDataUtil.createEntryRowFromEntry(entry2);
-
-        List<EntryRow> result = underTest.getAllEntryRows();
+        FlatEntryDto entryRow1 = TestDataUtil.createEntryRowFromEntry(entry1);
+        FlatEntryDto entryRow2 = TestDataUtil.createEntryRowFromEntry(entry2);
+        
+        List<FlatEntryDto> result = underTest.getAllFlatEntryDto();
         assertThat(result)
             .hasSize(2)
             .containsExactly(entryRow1, entryRow2);
@@ -96,7 +95,7 @@ public class EntryServiceIntegrationTests {
 
     @Test
     public void testThatCanUpdateEntry() {
-        EntryDto entry = TestDataUtil.createTestEntry();
+        FullEntryDto entry = TestDataUtil.createTestEntry();
         underTest.create(entry);
 
         entry.getBook().setTitle("UPDATED");
@@ -105,7 +104,7 @@ public class EntryServiceIntegrationTests {
         
         underTest.update(entry);
 
-        List<EntryDto> result = underTest.findAll();
+        List<FullEntryDto> result = underTest.findAll();
         assertThat(result).containsExactly(entry);
     }
 

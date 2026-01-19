@@ -148,7 +148,7 @@ public class BookRepositoryImplTests {
         underTest.assignToAuthor(book, author);
         
         String expectedSql = """
-                INSERT INTO "book_person" ("book_id", "person_id", "role", "order_index")
+                INSERT OR IGNORE INTO "book_person" ("book_id", "person_id", "role", "order_index")
                 VALUES (?, ?, ?, ?);
                 """;
         verify(jdbcTemplate).update(
@@ -171,7 +171,7 @@ public class BookRepositoryImplTests {
         underTest.assignToEditor(book, editor);
 
         String expectedSql = """
-                INSERT INTO "book_person" ("book_id", "person_id", "role", "order_index")
+                INSERT OR IGNORE INTO "book_person" ("book_id", "person_id", "role", "order_index")
                 VALUES (?, ?, ?, ?);
                 """;
 
@@ -216,7 +216,8 @@ public class BookRepositoryImplTests {
                 SELECT "persons"."id", "last_name", "first_names" FROM "persons"
                 JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
                 WHERE "role" = 'AUTHOR'
-                AND "book_id" = ?;
+                AND "book_id" = ?
+                ORDER BY "order_index";
                 """;
 
         verify(jdbcTemplate).query(

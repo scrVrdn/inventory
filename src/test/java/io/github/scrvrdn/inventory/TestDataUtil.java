@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 import io.github.scrvrdn.inventory.domain.Book;
 import io.github.scrvrdn.inventory.domain.Person;
 import io.github.scrvrdn.inventory.domain.Publisher;
-import io.github.scrvrdn.inventory.dto.EntryDto;
-import io.github.scrvrdn.inventory.dto.EntryRow;
+import io.github.scrvrdn.inventory.dto.FullEntryDto;
+import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 
 public final class TestDataUtil {
 
@@ -93,13 +93,13 @@ public final class TestDataUtil {
             .build();
     }
 
-    public static EntryDto createTestEntry() {
+    public static FullEntryDto createTestEntry() {
         Book book = createTestBook();
         Person author = createTestPerson();
         Person editor = createTestPerson3();
         Publisher publisher = createTestPublisher();
         
-        return EntryDto.builder()
+        return FullEntryDto.builder()
                 .book(book)
                 .authors(new ArrayList<>(List.of(author)))
                 .editors(new ArrayList<>(List.of(editor)))
@@ -107,13 +107,13 @@ public final class TestDataUtil {
                 .build();
     }
 
-    public static EntryDto createTestEntry2() {
+    public static FullEntryDto createTestEntry2() {
         Book book = createTestBook2();
         Person author = createTestPerson2();
         Person editor = createTestPerson4();
         Publisher publisher = createTestPublisher2();
 
-        return EntryDto.builder()
+        return FullEntryDto.builder()
                 .book(book)
                 .authors(new ArrayList<>(List.of(author)))
                 .editors(new ArrayList<>(List.of(editor)))
@@ -121,8 +121,8 @@ public final class TestDataUtil {
                 .build();
     }
 
-    public static EntryRow createEntryRowFromEntry(EntryDto entry) {
-        return EntryRow.builder()
+    public static FlatEntryDto createEntryRowFromEntry(FullEntryDto entry) {
+        return FlatEntryDto.builder()
                     .bookId(entry.getBook().getId())
                     .bookTitle(entry.getBook().getTitle())
                     .bookYear(entry.getBook().getYear())

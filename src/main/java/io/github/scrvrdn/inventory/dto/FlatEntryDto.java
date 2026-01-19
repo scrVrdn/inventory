@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EntryRow {
+public class FlatEntryDto {
     private Long bookId;
     private String bookTitle;
     private int bookYear;

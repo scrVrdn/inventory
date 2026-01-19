@@ -4,19 +4,21 @@ package io.github.scrvrdn.inventory.services;
 import java.util.List;
 import java.util.Optional;
 
-import io.github.scrvrdn.inventory.dto.EntryDto;
-import io.github.scrvrdn.inventory.dto.EntryRow;
+import io.github.scrvrdn.inventory.dto.FullEntryDto;
+import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 
 
 public interface EntryService {
 
-    void create(EntryDto entry);
+    void create(FullEntryDto entry);
 
-    List<EntryDto> findAll();
+    List<FullEntryDto> findAll();
 
-    Optional<EntryRow> getEntryRow(long bookId);
+    Optional<FullEntryDto> findById(long id);
 
-    List<EntryRow> getAllEntryRows();
+    Optional<FlatEntryDto> getFlatEntryDto(long bookId);
 
-    void update(EntryDto entry);
+    List<FlatEntryDto> getAllFlatEntryDto();
+
+    void update(FullEntryDto entry);
 }

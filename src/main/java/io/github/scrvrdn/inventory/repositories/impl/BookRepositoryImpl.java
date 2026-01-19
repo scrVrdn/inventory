@@ -130,7 +130,7 @@ public class BookRepositoryImpl implements BookRepository {
     @Override
     public void assignToAuthor(Book book, List<Person> authors) {
         String query = """
-                INSERT INTO "book_person" ("book_id", "person_id", "role", "order_index")
+                INSERT OR IGNORE INTO "book_person" ("book_id", "person_id", "role", "order_index")
                 VALUES (?, ?, ?, ?);
                 """;
         int i = 0;
@@ -151,7 +151,8 @@ public class BookRepositoryImpl implements BookRepository {
                 SELECT "persons"."id", "last_name", "first_names" FROM "persons"
                 JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
                 WHERE "role" = 'AUTHOR'
-                AND "book_id" = ?;
+                AND "book_id" = ?
+                ORDER BY "order_index";
                 """;
         return jdbcTemplate.query(
             query,
@@ -168,7 +169,7 @@ public class BookRepositoryImpl implements BookRepository {
     @Override
     public void assignToEditor(Book book, List<Person> editors) {
         String query = """
-                INSERT INTO "book_person" ("book_id", "person_id", "role", "order_index")
+                INSERT OR IGNORE INTO "book_person" ("book_id", "person_id", "role", "order_index")
                 VALUES (?, ?, ?, ?);
                 """;
         int i = 0;
@@ -178,7 +179,7 @@ public class BookRepositoryImpl implements BookRepository {
                 book.getId(),
                 e.getId(),
                 "EDITOR",
-                i           
+                i++        
             );
         }
     }

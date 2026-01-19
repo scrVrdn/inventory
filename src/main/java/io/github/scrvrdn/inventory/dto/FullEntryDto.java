@@ -17,7 +17,7 @@ import lombok.Builder.Default;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EntryDto {
+public class FullEntryDto {
     private Book book;
     private List<Person> authors;
     private List<Person> editors;
