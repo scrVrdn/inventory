@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
+import io.github.scrvrdn.inventory.domain.Book;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 
@@ -33,6 +34,8 @@ public class EntryServiceIntegrationTests {
         JdbcTestUtils.deleteFromTables(jdbcTemplate, "books", "persons", "publishers", "authored", "edited", "published");
     }
 
+
+
     @Test
     public void testThatFullEntryDtoCanBeCreatedAndRetrieved() {
         FullEntryDto entry = TestDataUtil.createTestEntry();
@@ -44,6 +47,18 @@ public class EntryServiceIntegrationTests {
         Optional<FullEntryDto> result = underTest.findById(entry.getBook().getId());
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(entry);
+    }
+
+    @Test
+    public void testThatEmptyFullEntryDtoCanBeRetrieved() {
+        Optional<FlatEntryDto> dto = underTest.createEmptyEntry();
+        FullEntryDto expected = FullEntryDto.builder()
+                                            .book(Book.builder().id(dto.get().getBookId()).build())
+                                            .build();
+
+        Optional<FullEntryDto> result = underTest.findById(dto.get().getBookId());
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(expected);
     }
 
     @Test
@@ -78,6 +93,15 @@ public class EntryServiceIntegrationTests {
     }
 
     @Test
+    public void testThatGetsEmptyFlatEntryDto() {
+        Optional<FlatEntryDto> dto = underTest.createEmptyEntry();
+
+        Optional<FlatEntryDto> result = underTest.getFlatEntryDto(dto.get().getBookId());
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(dto.get());
+    }
+
+    @Test
     public void testThatGetsAllFLatEntryDtos() {
         FullEntryDto entry1 = TestDataUtil.createTestEntry();
         FullEntryDto entry2 = TestDataUtil.createTestEntry2();
@@ -87,7 +111,7 @@ public class EntryServiceIntegrationTests {
         FlatEntryDto entryRow1 = TestDataUtil.createEntryRowFromEntry(entry1);
         FlatEntryDto entryRow2 = TestDataUtil.createEntryRowFromEntry(entry2);
         
-        List<FlatEntryDto> result = underTest.getAllFlatEntryDto();
+        List<FlatEntryDto> result = underTest.getAllFlatEntryDtos();
         assertThat(result)
             .hasSize(2)
             .containsExactly(entryRow1, entryRow2);

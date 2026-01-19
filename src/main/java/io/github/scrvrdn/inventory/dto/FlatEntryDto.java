@@ -10,9 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class FlatEntryDto {
+    
     private Long bookId;
     private String bookTitle;
-    private int bookYear;
+    private Integer bookYear;
     private String shelfMark;
     private String authors;
     private String editors;

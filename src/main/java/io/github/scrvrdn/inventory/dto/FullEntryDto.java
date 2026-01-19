@@ -1,5 +1,6 @@
 package io.github.scrvrdn.inventory.dto;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,8 +20,13 @@ import lombok.Builder.Default;
 @Builder
 public class FullEntryDto {
     private Book book;
-    private List<Person> authors;
-    private List<Person> editors;
+
+    @Default
+    private List<Person> authors = new ArrayList<>();
+
+    @Default
+    private List<Person> editors = new ArrayList<>();
+    
     private Publisher publisher;
 
     @Default

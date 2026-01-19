@@ -1,5 +1,7 @@
 package io.github.scrvrdn.inventory.controller;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Controller;
 
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
@@ -58,10 +60,12 @@ public class MainController {
         title.setCellValueFactory(new PropertyValueFactory<>("bookTitle"));
         editors.setCellValueFactory(new PropertyValueFactory<>("editors"));
         publisher.setCellValueFactory(new PropertyValueFactory<>("publisher"));
+        
         year.setCellValueFactory(new PropertyValueFactory<>("bookYear"));
+
         shelfMark.setCellValueFactory(new PropertyValueFactory<>("shelfMark"));
 
-        table.setItems(getEntryRows());
+        table.setItems(getEntries());
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             Long entryId = newSelection.getBookId();
             entryService.findById(entryId)
@@ -71,15 +75,21 @@ public class MainController {
         detailsPane.setSaveCallback(this::handleSave);
     }
 
-    private ObservableList<FlatEntryDto> getEntryRows() {
+    private ObservableList<FlatEntryDto> getEntries() {
         ObservableList<FlatEntryDto> rows = FXCollections.observableArrayList();
-        rows.addAll(entryService.getAllFlatEntryDto());
+        rows.addAll(entryService.getAllFlatEntryDtos());
         return rows;
     }
 
     @FXML
     private void handleAddNewEntryButton() {
-        entryService.create(null);
+        Optional<FlatEntryDto> entry = entryService.createEmptyEntry();
+        if (entry.isPresent()) {
+            
+            table.getItems().add(entry.get());
+            table.getSelectionModel().selectLast();
+            table.scrollTo(table.getItems().size() - 1);
+        }        
     }
 
     @FXML

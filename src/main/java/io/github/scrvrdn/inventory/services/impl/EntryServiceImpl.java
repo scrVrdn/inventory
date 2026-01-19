@@ -36,6 +36,19 @@ public class EntryServiceImpl implements EntryService {
         this.personRepository = personRepository;
         this.publisherRepository = publisherRepository;
     }
+
+    @Override
+    public Optional<FlatEntryDto> createEmptyEntry() {
+        Book emptyBook = createEmptyBook();
+        bookRepository.create(emptyBook);
+        return Optional.ofNullable(FlatEntryDto.builder()
+                                                .bookId(emptyBook.getId())
+                                                .build());
+    }
+
+    protected Book createEmptyBook() {
+        return Book.builder().build();
+    }
     
     @Override
     public void create(FullEntryDto entryDto) {
@@ -121,7 +134,7 @@ public class EntryServiceImpl implements EntryService {
     }
 
     @Override
-    public List<FlatEntryDto> getAllFlatEntryDto() {
+    public List<FlatEntryDto> getAllFlatEntryDtos() {
         String query = """
                 SELECT
                     b."id", b."title", b."year", b."shelf_mark",
@@ -167,10 +180,13 @@ public class EntryServiceImpl implements EntryService {
     public static class FlatEntryDtoRowMapper implements RowMapper<FlatEntryDto> {
         @Override
         public FlatEntryDto mapRow(ResultSet rs, int rowNum) throws SQLException {
+            int yearInt = rs.getInt("year");
+            Integer year = rs.wasNull() ? null : yearInt;
+
             return FlatEntryDto.builder()
                 .bookId(rs.getLong("id"))
                 .bookTitle(rs.getString("title"))
-                .bookYear(rs.getObject("year", Integer.class))
+                .bookYear(year)
                 .shelfMark(rs.getString("shelf_mark"))
                 .authors(rs.getString("authors"))
                 .editors(rs.getString("editors"))
@@ -184,20 +200,29 @@ public class EntryServiceImpl implements EntryService {
         public FullEntryDto extractData(ResultSet rs) throws SQLException {
             if (!rs.next()) return null;
 
+            int yearInt = rs.getInt("year");
+            Integer year = rs.wasNull() ? null : yearInt;
+
             Book book = Book.builder()
                     .id(rs.getLong("id"))
                     .title(rs.getString("title"))
-                    .year(rs.getInt("year"))
+                    .year(year)
                     .isbn10(rs.getString("isbn10"))
                     .isbn13(rs.getString("isbn13"))
                     .shelfMark(rs.getString("shelf_mark"))
                     .build();
             
-            Publisher publisher = Publisher.builder()
-                    .id(rs.getLong("publisher_id"))
+            long publisherId = rs.getLong("publisher_id");
+            Publisher publisher = null;
+            if (!rs.wasNull()) {
+                publisher = Publisher.builder()
+                    .id(publisherId)
                     .name(rs.getString("publisher_name"))
                     .location(rs.getString("publisher_location"))
                     .build();
+            }
+
+            
 
             List<Person> authors = new ArrayList<>();
             List<Person> editors = new ArrayList<>();

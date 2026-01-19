@@ -58,8 +58,12 @@ public class DetailsPaneController {
         titleField.setText(entry.getBook().getTitle());
         populateAuthors();
         populateEditors();
-        publisherPlaceField.setText(entry.getPublisher().getLocation());
-        publisherNameField.setText(entry.getPublisher().getName());
+
+        if (entry.getPublisher() != null) {
+            publisherPlaceField.setText(entry.getPublisher().getLocation());
+            publisherNameField.setText(entry.getPublisher().getName());
+        }
+        
         yearField.setText(String.valueOf(entry.getBook().getYear()));
         isbn10Field.setText(entry.getBook().getIsbn10());
         isbn13Field.setText(entry.getBook().getIsbn13());

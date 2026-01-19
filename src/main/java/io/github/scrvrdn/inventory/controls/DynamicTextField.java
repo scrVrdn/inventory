@@ -41,7 +41,7 @@ public class DynamicTextField extends TextField {
 
     private void updateWidth() {
         String text = getText();
-        if (skin == null || text.length() < MIN_CHARS) {
+        if (skin == null || text == null || text.length() < MIN_CHARS) {
             setPrefWidth(-1);
             return;
         }

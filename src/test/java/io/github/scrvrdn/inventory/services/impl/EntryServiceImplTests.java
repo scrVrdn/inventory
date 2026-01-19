@@ -2,15 +2,26 @@ package io.github.scrvrdn.inventory.services.impl;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import io.github.scrvrdn.inventory.domain.Book;
+import io.github.scrvrdn.inventory.dto.FlatEntryDto;
+import io.github.scrvrdn.inventory.repositories.BookRepository;
 import io.github.scrvrdn.inventory.services.impl.EntryServiceImpl.EntryDtoExtractor;
 import io.github.scrvrdn.inventory.services.impl.EntryServiceImpl.FlatEntryDtoRowMapper;
 
@@ -20,8 +31,29 @@ public class EntryServiceImplTests {
     @Mock
     private JdbcTemplate jdbcTemplate;
 
+    @Mock
+    private BookRepository bookRepository;
+
+    @Spy
     @InjectMocks
     private EntryServiceImpl underTest;
+
+    @Test
+    public void testThatCreateEmptyEntryCallsBookRepository() {
+        Book mockBook = mock(Book.class);
+        when(mockBook.getId()).thenReturn(1L);        
+        doReturn(mockBook).when(underTest).createEmptyBook();
+
+        FlatEntryDto expected = FlatEntryDto.builder()
+                                            .bookId(1L)
+                                            .build();
+
+
+        Optional<FlatEntryDto> result = underTest.createEmptyEntry();        
+
+        assertThat(result.get()).isEqualTo(expected);        
+        verify(bookRepository).create(any(Book.class));
+    }
 
     @Test
     public void testThatFindByIdGeneratesCorrectSql() {
@@ -76,7 +108,7 @@ public class EntryServiceImplTests {
 
     @Test
     public void testThatGetAllFlatEntryDtoGeneratesCorrectSql() {
-        underTest.getAllFlatEntryDto();
+        underTest.getAllFlatEntryDtos();
 
         String expectedSql = """
                 SELECT

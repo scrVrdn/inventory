@@ -10,6 +10,8 @@ import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 
 public interface EntryService {
 
+    Optional<FlatEntryDto> createEmptyEntry();
+
     void create(FullEntryDto entry);
 
     List<FullEntryDto> findAll();
@@ -18,7 +20,7 @@ public interface EntryService {
 
     Optional<FlatEntryDto> getFlatEntryDto(long bookId);
 
-    List<FlatEntryDto> getAllFlatEntryDto();
+    List<FlatEntryDto> getAllFlatEntryDtos();
 
     void update(FullEntryDto entry);
 }

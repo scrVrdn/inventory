@@ -1,6 +1,12 @@
+-- DROP TABLE IF EXISTS "books";
+-- DROP TABLE IF EXISTS "persons";
+-- DROP TABLE IF EXISTS "publishers";
+-- DROP TABLE IF EXISTS "book_person";
+-- DROP TABLE IF EXISTS "published";
+
 CREATE TABLE IF NOT EXISTS "books" (
     "id" INTEGER,
-    "title" TEXT NOT NULL,
+    "title" TEXT,
     "year" INTEGER,
     "isbn10" TEXT UNIQUE,
     "isbn13" TEXT UNIQUE,
@@ -8,13 +14,15 @@ CREATE TABLE IF NOT EXISTS "books" (
     PRIMARY KEY("id")
 );
 
+
 CREATE TABLE IF NOT EXISTS "persons" (
     "id" INTEGER,
-    "last_name" TEXT NOT NULL,
+    "last_name" TEXT,
     "first_names" TEXT,
     PRIMARY KEY("id"),
     UNIQUE("last_name", "first_names")
 );
+
 
 CREATE TABLE IF NOT EXISTS "publishers" (
     "id" INTEGER,
@@ -24,7 +32,7 @@ CREATE TABLE IF NOT EXISTS "publishers" (
     UNIQUE("name", "location")
 );
 
--- DROP TABLE IF EXISTS "book_person";
+
 CREATE TABLE IF NOT EXISTS "book_person" (
     "book_id" INTEGER,
     "person_id" INTEGER,
@@ -34,6 +42,7 @@ CREATE TABLE IF NOT EXISTS "book_person" (
     FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE,
     FOREIGN KEY("person_id") REFERENCES "persons"("id") ON DELETE CASCADE
 );
+
 
 CREATE TABLE IF NOT EXISTS "published" (
     "book_id" INTEGER,

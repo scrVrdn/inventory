@@ -4,6 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,7 +56,7 @@ public class BookRepositoryImpl implements BookRepository {
         return connection -> {
             PreparedStatement ps = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, book.getTitle());
-            ps.setInt(2, book.getYear());
+            ps.setObject(2, book.getYear(), Types.INTEGER);
             ps.setString(3, book.getIsbn10());
             ps.setString(4, book.getIsbn13());
             ps.setString(5, book.getShelfMark());
