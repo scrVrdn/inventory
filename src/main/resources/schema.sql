@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS "persons" (
     "last_name" TEXT,
     "first_names" TEXT,
     PRIMARY KEY("id"),
-    UNIQUE("last_name", "first_names")
+    UNIQUE("last_name", "first_names"),
+    CHECK ("last_name" IS NOT NULL OR "first_names" IS NOT NULL)
 );
 
 
@@ -29,13 +30,14 @@ CREATE TABLE IF NOT EXISTS "publishers" (
     "name" TEXT,
     "location" TEXT,
     PRIMARY KEY("id"),
-    UNIQUE("name", "location")
+    UNIQUE("name", "location"),
+    CHECK ("name" IS NOT NULL OR "location" IS NOT NULL)
 );
 
 
 CREATE TABLE IF NOT EXISTS "book_person" (
-    "book_id" INTEGER,
-    "person_id" INTEGER,
+    "book_id" INTEGER NOT NULL,
+    "person_id" INTEGER NOT NULL,
     "role" TEXT CHECK("role" IN ('AUTHOR', 'EDITOR')),
     "order_index" INTEGER DEFAULT 0,
     PRIMARY KEY("book_id", "person_id", "role"),
@@ -45,8 +47,9 @@ CREATE TABLE IF NOT EXISTS "book_person" (
 
 
 CREATE TABLE IF NOT EXISTS "published" (
-    "book_id" INTEGER,
-    "publisher_id" INTEGER,
+    "book_id" INTEGER NOT NULL,
+    "publisher_id" INTEGER NOT NULL,
     FOREIGN KEY("book_id") REFERENCES "books"("id") ON DELETE CASCADE,
-    FOREIGN KEY("publisher_id") REFERENCES "publishers"("id") ON DELETE CASCADE
+    FOREIGN KEY("publisher_id") REFERENCES "publishers"("id") ON DELETE CASCADE,
+    UNIQUE("book_id")
 );

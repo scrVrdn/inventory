@@ -1,4 +1,4 @@
-package io.github.scrvrdn.inventory.services;
+package io.github.scrvrdn.inventory.services.facade;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,8 +11,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.domain.Book;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
+import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +31,7 @@ public class EntryServiceIntegrationTests {
 
     @BeforeEach
     public void setup() {
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "books", "persons", "publishers", "authored", "edited", "published");
+        JdbcTestUtils.deleteFromTables(jdbcTemplate, "books", "persons", "publishers", "book_person", "published");
     }
 
 
@@ -122,15 +122,27 @@ public class EntryServiceIntegrationTests {
         FullEntryDto entry = TestDataUtil.createTestEntry();
         underTest.create(entry);
 
-        entry.getBook().setTitle("UPDATED");
-        entry.getUpdatedFields().add("book");
-       // entry.getAuthors().add(TestDataUtil.createTestPerson2());
+        // entry.getBook().setTitle("UPDATED");
+        // entry.getUpdatedFields().add("book");
+        entry.getAuthors().add(TestDataUtil.createTestPerson2());
         
         underTest.update(entry);
-
-        List<FullEntryDto> result = underTest.findAll();
-        assertThat(result).containsExactly(entry);
+        Optional<FullEntryDto> result = underTest.findById(entry.getBook().getId());
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(entry);
+        List<FullEntryDto> resultList = underTest.findAll();
+        assertThat(resultList).containsExactly(entry);
     }
 
+
+    @Test
+    public void testThatEntryCanBeDeleted() {
+        FullEntryDto entry = TestDataUtil.createTestEntry();
+        underTest.create(entry);
+
+        underTest.delete(entry.getBook().getId());
+        Optional<FullEntryDto> result = underTest.findById(entry.getBook().getId());
+        assertThat(result).isEmpty();
+    }
     
 }

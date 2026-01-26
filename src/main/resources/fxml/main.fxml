@@ -32,6 +32,7 @@
                         <VBox VBox.vgrow="ALWAYS">
                             <ToolBar>
                                 <Button text="New Entry" fx:id="addNewEntryButton" onAction="#handleAddNewEntryButton"/>
+                                <Button text="Delete Entry" fx:id="deleteEntryButton" onAction="#handleDeleteEntryButton"/>
                             </ToolBar>
                             <TableView fx:id="table" VBox.vgrow="ALWAYS">
                                 <columns>

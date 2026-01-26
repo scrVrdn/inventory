@@ -1,23 +1,18 @@
 package io.github.scrvrdn.inventory.repositories.impl;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import io.github.scrvrdn.inventory.domain.Publisher;
+import io.github.scrvrdn.inventory.dto.Publisher;
+import io.github.scrvrdn.inventory.mappers.PublisherRowMapper;
 import io.github.scrvrdn.inventory.repositories.PublisherRepository;
 
 @Repository
@@ -91,18 +86,6 @@ public class PublisherRepositoryImpl implements PublisherRepository {
         return jdbcTemplate.query(query, new PublisherRowMapper());
     }
 
-    @Override
-    public Map<Long, Publisher> findPublishersGroupedByBookId() {
-        String query = """
-                SELECT * FROM "publishers"
-                JOIN "published" ON "publishers"."id" = "published"."publisher_id";
-                """;
-
-        List<Entry<Long, Publisher>> result = jdbcTemplate.query(query, new PublisherByBookIdMapper());
-        return result.stream().collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-    }
-
-
 
     @Override
     public void update(Publisher publisher) {
@@ -129,30 +112,4 @@ public class PublisherRepositoryImpl implements PublisherRepository {
         jdbcTemplate.update(query, id);
     }
 
-    
-
-    public static class PublisherRowMapper implements RowMapper<Publisher> {
-        @Override
-        public Publisher mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return Publisher.builder()
-                .id(rs.getLong("id"))
-                .name(rs.getString("name"))
-                .location(rs.getString("location"))
-                .build();
-        }
-    }
-
-    public static class PublisherByBookIdMapper implements RowMapper<Entry<Long, Publisher>> {
-        @Override
-        public Entry<Long, Publisher> mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return Map.entry(
-                rs.getLong("book_id"),
-                Publisher.builder()
-                    .id(rs.getLong("id"))
-                    .name(rs.getString("name"))
-                    .location(rs.getString("location"))
-                    .build()
-            );
-        }
-    }
 }

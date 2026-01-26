@@ -1,4 +1,4 @@
-package io.github.scrvrdn.inventory.services.impl;
+package io.github.scrvrdn.inventory.services.facade.impl;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -19,11 +19,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.github.scrvrdn.inventory.domain.Book;
+import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
+import io.github.scrvrdn.inventory.mappers.EntryDtoExtractor;
+import io.github.scrvrdn.inventory.mappers.FlatEntryDtoRowMapper;
 import io.github.scrvrdn.inventory.repositories.BookRepository;
-import io.github.scrvrdn.inventory.services.impl.EntryServiceImpl.EntryDtoExtractor;
-import io.github.scrvrdn.inventory.services.impl.EntryServiceImpl.FlatEntryDtoRowMapper;
+import io.github.scrvrdn.inventory.services.facade.impl.EntryServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 public class EntryServiceImplTests {
@@ -66,14 +67,14 @@ public class EntryServiceImplTests {
                     a."id" AS "author_id", a."last_name" AS "author_last_name", a."first_names" AS "author_first_names",
                     e."id" AS "editor_id", e."last_name" AS "editor_last_name", e."first_names" AS "editor_first_names",
                     "publishers"."id" AS "publisher_id", "publishers"."location" AS "publisher_location", "publishers"."name" AS "publisher_name"
-                    FROM "books" b
-                    LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
-                    LEFT JOIN "persons" a ON "book_person"."person_id" = a."id" AND "book_person"."role" = 'AUTHOR'
-                    LEFT JOIN "persons" e ON "book_person"."person_id" = e."id" AND "book_person"."role" = 'EDITOR'
-                    LEFT JOIN "published" ON b."id" = "published"."book_id"
-                    LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                    WHERE b."id" = ?
-                    ORDER BY "book_person"."role", "book_person"."order_index";
+                FROM "books" b
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" a ON "book_person"."person_id" = a."id" AND "book_person"."role" = 'AUTHOR'
+                LEFT JOIN "persons" e ON "book_person"."person_id" = e."id" AND "book_person"."role" = 'EDITOR'
+                LEFT JOIN "published" ON b."id" = "published"."book_id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                WHERE b."id" = ?
+                ORDER BY "book_person"."role", "book_person"."order_index";
                 """;
 
                 verify(jdbcTemplate).query(eq(expectedSql), any(EntryDtoExtractor.class), eq(bookId));
@@ -129,6 +130,13 @@ public class EntryServiceImplTests {
                 """;
 
         verify(jdbcTemplate).query(eq(expectedSql), any(FlatEntryDtoRowMapper.class));
+    }
+
+    @Test
+    public void testThatDeleteCallsBookRepositoryDelete() {
+        long bookId = 1L;
+        underTest.delete(bookId);
+        verify(bookRepository).delete(bookId);
     }
 
 }

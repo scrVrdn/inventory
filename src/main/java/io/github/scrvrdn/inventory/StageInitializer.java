@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import io.github.scrvrdn.inventory.Main.StageReadyEvent;
+import io.github.scrvrdn.inventory.events.StageReadyEvent;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;

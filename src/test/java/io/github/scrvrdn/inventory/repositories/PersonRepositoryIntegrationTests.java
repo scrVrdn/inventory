@@ -6,8 +6,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.domain.Book;
-import io.github.scrvrdn.inventory.domain.Person;
+import io.github.scrvrdn.inventory.dto.Book;
+import io.github.scrvrdn.inventory.dto.Person;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -74,66 +74,9 @@ public class PersonRepositoryIntegrationTests {
                 .containsExactly(person1, person2, person3, person4);
     }
 
-    @Test
-    public void testThatAllAuthorsGroupedByBookIdCanBeRetrieved() {
-        Person person1 = TestDataUtil.createTestPerson();
-        Person person2 = TestDataUtil.createTestPerson2();
-        Person person3 = TestDataUtil.createTestPerson3();
-        Person person4 = TestDataUtil.createTestPerson4();
-        underTest.createAll(List.of(person1, person2, person3, person4));
+    
 
-        Book book1 = TestDataUtil.createTestBook();
-        bookRepository.create(book1);
-        Book book2 = TestDataUtil.createTestBook2();
-        bookRepository.create(book2);
-        Book book3 = TestDataUtil.createTestBook3();
-        bookRepository.create(book3);
-
-        bookRepository.assignToAuthor(book1, List.of(person1, person2));
-        bookRepository.assignToAuthor(book2, List.of(person1, person2, person3));
-        bookRepository.assignToAuthor(book3, List.of(person4));
-
-        Map<Long, List<Person>> result = underTest.findAuthorsGroupedByBookId();
-        
-        assertThat(result)
-            .hasSize(3)
-            .containsKeys(book1.getId(), book2.getId(), book3.getId())
-            .containsExactly(
-                Map.entry(book1.getId(), List.of(person1, person2)),
-                Map.entry(book2.getId(), List.of(person1, person2, person3)),
-                Map.entry(book3.getId(), List.of(person4))
-            );
-    }
-
-    @Test
-    public void testThatAllEditorsGroupedByBookIdCanBeRetrieved() {
-        Person person1 = TestDataUtil.createTestPerson();
-        Person person2 = TestDataUtil.createTestPerson2();
-        Person person3 = TestDataUtil.createTestPerson3();
-        Person person4 = TestDataUtil.createTestPerson4();
-        underTest.createAll(List.of(person1, person2, person3, person4));
-
-        Book book1 = TestDataUtil.createTestBook();
-        bookRepository.create(book1);
-        Book book2 = TestDataUtil.createTestBook2();
-        bookRepository.create(book2);
-        Book book3 = TestDataUtil.createTestBook3();
-        bookRepository.create(book3);
-
-        bookRepository.assignToEditor(book1, List.of(person1));
-        bookRepository.assignToEditor(book2, List.of(person1, person2));
-        bookRepository.assignToEditor(book3, List.of(person1, person2, person3, person4));
-
-        Map<Long, List<Person>> result = underTest.findEditorsGroupedByBookId();
-
-        assertThat(result)
-            .hasSize(3)
-            .containsExactly(
-                Map.entry(book1.getId(), List.of(person1)),
-                Map.entry(book2.getId(), List.of(person1, person2)),
-                Map.entry(book3.getId(), List.of(person1, person2, person3, person4))
-            );
-    }
+    
 
     @Test
     public void testThatAllPersonsCanBeRetrieved() {

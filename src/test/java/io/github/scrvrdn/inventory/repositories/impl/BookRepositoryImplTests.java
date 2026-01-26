@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -20,17 +21,19 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.KeyHolder;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.domain.Book;
-import io.github.scrvrdn.inventory.domain.Person;
-import io.github.scrvrdn.inventory.domain.Publisher;
-import io.github.scrvrdn.inventory.repositories.impl.BookRepositoryImpl.BookRowMapper;
-import io.github.scrvrdn.inventory.repositories.impl.PersonRepositoryImpl.PersonRowMapper;
-import io.github.scrvrdn.inventory.repositories.impl.PublisherRepositoryImpl.PublisherRowMapper;
+import io.github.scrvrdn.inventory.dto.Book;
+import io.github.scrvrdn.inventory.dto.Person;
+import io.github.scrvrdn.inventory.dto.Publisher;
+import io.github.scrvrdn.inventory.mappers.BookRowMapper;
+import io.github.scrvrdn.inventory.mappers.PersonRowMapper;
+import io.github.scrvrdn.inventory.mappers.PublisherRowMapper;
 
 @ExtendWith(MockitoExtension.class)
 public class BookRepositoryImplTests {
@@ -139,132 +142,11 @@ public class BookRepositoryImplTests {
         verify(jdbcTemplate).update(expectedSql, id);
     }
 
-    @Test
-    public void testThatAssignToAuthorGeneratesCorrectSql() {
-        Book book = TestDataUtil.createTestBook();
-        book.setId(1L);
-        Person author = TestDataUtil.createTestPerson();
-        author.setId(1L);
-        underTest.assignToAuthor(book, author);
-        
-        String expectedSql = """
-                INSERT OR IGNORE INTO "book_person" ("book_id", "person_id", "role", "order_index")
-                VALUES (?, ?, ?, ?);
-                """;
-        verify(jdbcTemplate).update(
-            expectedSql,
-            book.getId(),
-            author.getId(),
-            "AUTHOR",
-            0
-        );
-    }
+       
+    
 
-    @Test
-    public void testThatAssignToEditorsGeneratesCorrectSql() {
-        Book book = TestDataUtil.createTestBook();
-        book.setId(1L);
+    
 
-        Person editor = TestDataUtil.createTestPerson3();
-        editor.setId(3L);
-
-        underTest.assignToEditor(book, editor);
-
-        String expectedSql = """
-                INSERT OR IGNORE INTO "book_person" ("book_id", "person_id", "role", "order_index")
-                VALUES (?, ?, ?, ?);
-                """;
-
-        verify(jdbcTemplate).update(
-            expectedSql,
-            book.getId(),
-            editor.getId(),
-            "EDITOR",
-            0
-        );
-    }
-
-    @Test
-    public void testThatAssignToPublisherGeneratesCorrectSql() {
-        Book book = TestDataUtil.createTestBook();
-        book.setId(1L);
-
-        Publisher publisher = TestDataUtil.createTestPublisher();
-        publisher.setId(1L);
-
-        underTest.assignToPublisher(book, publisher);
-
-        String expectedSql = """
-                INSERT INTO "published" ("book_id", "publisher_id")
-                VALUES (?, ?);
-                """;
-
-        verify(jdbcTemplate).update(
-            expectedSql,
-            book.getId(),
-            publisher.getId()
-        );
-    }
-
-    @Test
-    public void testThatFindAuthorsGeneratesCorrectSql() {
-        Book book = TestDataUtil.createTestBook();
-        book.setId(1L);
-        underTest.findAuthors(book);
-
-        String expectedSql = """
-                SELECT "persons"."id", "last_name", "first_names" FROM "persons"
-                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
-                WHERE "role" = 'AUTHOR'
-                AND "book_id" = ?
-                ORDER BY "order_index";
-                """;
-
-        verify(jdbcTemplate).query(
-                    eq(expectedSql),
-                    any(PersonRowMapper.class),
-                    eq(book.getId())
-        );
-    }
-
-    @Test
-    public void testThatFindEditorsGeneratesCorrectSql() {
-        Book book = TestDataUtil.createTestBook();
-        book.setId(1L);
-        underTest.findEditors(book);
-
-        String expectedSql = """
-                SELECT "persons"."id", "last_name", "first_names" FROM "persons"
-                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
-                WHERE "role" = 'EDITOR'
-                AND "book_id" = ?
-                ORDER BY "order_index";
-                """;
-
-        verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PersonRowMapper.class),
-            eq(book.getId())
-        );
-    }
-
-    @Test
-    public void testThatFindPublisherGeneratesCorrectSql() {
-        Book book = TestDataUtil. createTestBook();
-        book.setId(1L);
-        underTest.findPublisher(book);
-
-        String expectedSql = """
-                SELECT "publishers"."id", "name", "location" FROM "publishers"
-                JOIN "published" ON "publishers"."id" = "published"."publisher_id"
-                WHERE "published"."book_id" = ?;
-                """;
-
-        verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PublisherRowMapper.class),
-            eq(book.getId())
-        );
-    }
+   
 
 }

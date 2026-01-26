@@ -1,4 +1,4 @@
-package io.github.scrvrdn.inventory.services;
+package io.github.scrvrdn.inventory.services.facade;
 
 
 import java.util.List;
@@ -22,5 +22,7 @@ public interface EntryService {
 
     List<FlatEntryDto> getAllFlatEntryDtos();
 
-    void update(FullEntryDto entry);
+    FlatEntryDto update(FullEntryDto entry);
+
+    void delete(long bookId);
 }

@@ -13,9 +13,9 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.domain.Book;
-import io.github.scrvrdn.inventory.domain.Person;
-import io.github.scrvrdn.inventory.domain.Publisher;
+import io.github.scrvrdn.inventory.dto.Book;
+import io.github.scrvrdn.inventory.dto.Person;
+import io.github.scrvrdn.inventory.dto.Publisher;
 
 @SpringBootTest
 public class BookRepositoryIntegrationTest {
@@ -24,23 +24,29 @@ public class BookRepositoryIntegrationTest {
     private final BookRepository underTest;
     private final PersonRepository personRepository;
     private final PublisherRepository publisherRepository;
+    private final BookPersonRepository bookPersonRepository;
+    private final BookPublisherRepository bookPublisherRepository;
 
     @Autowired
     public BookRepositoryIntegrationTest(
                 final JdbcTemplate jdbcTemplate,
                 final BookRepository underTest,
                 final PersonRepository personRepository,
-                final PublisherRepository publisherRepository
+                final PublisherRepository publisherRepository,
+                final BookPersonRepository bookPersonRepository,
+                final BookPublisherRepository bookPublisherRepository
     ) {
         this.jdbcTemplate = jdbcTemplate;
         this.underTest = underTest;
         this.personRepository = personRepository;
         this.publisherRepository = publisherRepository;
+        this.bookPersonRepository = bookPersonRepository;
+        this.bookPublisherRepository = bookPublisherRepository;
     }
 
     @BeforeEach
     public void setup() {
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "books", "persons", "publishers", "authored", "edited", "published");
+        JdbcTestUtils.deleteFromTables(jdbcTemplate, "books", "persons", "publishers", "book_person", "published");
     }
 
 
@@ -115,11 +121,11 @@ public class BookRepositoryIntegrationTest {
         Person author = TestDataUtil.createTestPerson();
         personRepository.create(author);
 
-        underTest.assignToAuthor(book, author);
+        bookPersonRepository.assignAuthorsToBook(book.getId(), List.of(author.getId()));
 
         underTest.delete(book.getId());
 
-        List<Person> result = underTest.findAuthors(book);
+        List<Person> result = bookPersonRepository.findAuthorsByBookId(book.getId());
         assertThat(result).isEmpty();
     }
 
@@ -129,13 +135,13 @@ public class BookRepositoryIntegrationTest {
         underTest.create(book);
 
         Person editor = TestDataUtil.createTestPerson3();
-
-        underTest.assignToEditor(book, editor);
-        personRepository.create(editor);
+        
+        personRepository.create(editor);   
+        bookPersonRepository.assignEditorsToBook(book.getId(), List.of(editor.getId()));
 
         underTest.delete(book.getId());
 
-        List<Person> result = underTest.findEditors(book);
+        List<Person> result = bookPersonRepository.findEditorsByBookId(book.getId());
         assertThat(result).isEmpty();
     }
 
@@ -147,11 +153,11 @@ public class BookRepositoryIntegrationTest {
         Publisher publisher = TestDataUtil.createTestPublisher();
         publisherRepository.create(publisher);
 
-        underTest.assignToPublisher(book, publisher);
+        bookPublisherRepository.assignPublisherToBook(book.getId(), publisher.getId());
 
         underTest.delete(book.getId());
 
-        Optional<Publisher> result = underTest.findPublisher(book);
+        Optional<Publisher> result = bookPublisherRepository.findPublisherByBookId(book.getId());
         assertThat(result).isEmpty();
     }
 
@@ -163,7 +169,7 @@ public class BookRepositoryIntegrationTest {
         Person author = TestDataUtil.createTestPerson();
         personRepository.create(author);
 
-        underTest.assignToAuthor(book, author);
+        bookPersonRepository.assignAuthorsToBook(book.getId(), List.of(author.getId()));
 
         underTest.delete(book.getId());
         Optional<Person> result = personRepository.findById(author.getId());
@@ -179,7 +185,7 @@ public class BookRepositoryIntegrationTest {
         Person editor = TestDataUtil.createTestPerson3();
         personRepository.create(editor);
 
-        underTest.assignToEditor(book, editor);
+        bookPersonRepository.assignEditorsToBook(book.getId(), List.of(editor.getId()));
 
         underTest.delete(book.getId());
 
@@ -196,7 +202,7 @@ public class BookRepositoryIntegrationTest {
         Publisher publisher = TestDataUtil.createTestPublisher();
         publisherRepository.create(publisher);
 
-        underTest.assignToPublisher(book, publisher);
+        bookPublisherRepository.assignPublisherToBook(book.getId(), publisher.getId());
 
         underTest.delete(book.getId());
 
@@ -205,50 +211,4 @@ public class BookRepositoryIntegrationTest {
         assertThat(result.get()).isEqualTo(publisher);
     }
 
-    @Test
-    public void testThatAuthorCanBeAssignedAndRetrievedByBook() {
-        Book book = TestDataUtil.createTestBook();
-        underTest.create(book);
-
-        Person author = TestDataUtil.createTestPerson();
-        personRepository.create(author);
-
-        underTest.assignToAuthor(book, author);
-
-        List<Person> result = underTest.findAuthors(book);
-        assertThat(result)
-            .hasSize(1)
-            .containsExactly(author);
-    }
-
-    @Test
-    public void testThatEditorCanBeAssignedAndRetrievedByBook() {
-        Book book = TestDataUtil.createTestBook();
-        underTest.create(book);
-
-        Person editor = TestDataUtil.createTestPerson3();
-        personRepository.create(editor);
-
-        underTest.assignToEditor(book, editor);
-
-        List<Person> result = underTest.findEditors(book);
-        assertThat(result)
-            .hasSize(1)
-            .containsExactly(editor);
-    }
-
-    @Test
-    public void testThatPublisherCanBeAssignedAndRetrievedByBook() {
-        Book book = TestDataUtil.createTestBook();
-        underTest.create(book);
-
-        Publisher publisher = TestDataUtil.createTestPublisher();
-        publisherRepository.create(publisher);
-
-        underTest.assignToPublisher(book, publisher);
-
-        Optional<Publisher> result = underTest.findPublisher(book);
-        assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo(publisher);
-    }
 }

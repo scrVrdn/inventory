@@ -13,7 +13,6 @@ public class DynamicTextField extends TextField {
     private double padding = 1.5;
 
     public DynamicTextField() {
-        super();
         initSizing();
     }
 

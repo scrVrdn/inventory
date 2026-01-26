@@ -5,8 +5,8 @@ import java.util.Optional;
 import org.springframework.stereotype.Controller;
 
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
+import io.github.scrvrdn.inventory.services.facade.EntryService;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
-import io.github.scrvrdn.inventory.services.EntryService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -45,6 +45,7 @@ public class MainController {
     @FXML private TextField shelfMarkField;
 
     @FXML private Button addNewEntryButton;
+    @FXML private Button deleteEntryButton;
 
     private DetailsPaneController detailsPane;
 
@@ -60,16 +61,18 @@ public class MainController {
         title.setCellValueFactory(new PropertyValueFactory<>("bookTitle"));
         editors.setCellValueFactory(new PropertyValueFactory<>("editors"));
         publisher.setCellValueFactory(new PropertyValueFactory<>("publisher"));
-        
         year.setCellValueFactory(new PropertyValueFactory<>("bookYear"));
-
         shelfMark.setCellValueFactory(new PropertyValueFactory<>("shelfMark"));
 
         table.setItems(getEntries());
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            Long entryId = newSelection.getBookId();
-            entryService.findById(entryId)
-                .ifPresent(this::showDetails);
+            if (newSelection != null) {
+                Long entryId = newSelection.getBookId();
+                entryService.findById(entryId)
+                            .ifPresent(this::showDetails);
+            } else {
+                showDetails(FullEntryDto.builder().build());
+            }
         });
 
         detailsPane.setSaveCallback(this::handleSave);
@@ -93,12 +96,24 @@ public class MainController {
     }
 
     @FXML
+    private void handleDeleteEntryButton() {
+        FlatEntryDto selected = table.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            entryService.delete(selected.getBookId());
+            table.getItems().remove(selected);
+        }
+    }
+
+    @FXML
     private void showDetails(FullEntryDto entry) {
         detailsPane.showDetails(entry);
         detailsPane.setSaveCallback(this::handleSave);
     }
 
     private void handleSave(FullEntryDto entry) {
-
+        FlatEntryDto updatedEntry = entryService.update(entry);
+        int idx = table.getSelectionModel().getSelectedIndex();
+        table.getItems().set(idx, updatedEntry);
+        table.getSelectionModel().select(idx);
     }
 }

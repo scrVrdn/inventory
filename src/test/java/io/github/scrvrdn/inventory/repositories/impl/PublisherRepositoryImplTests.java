@@ -25,9 +25,9 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.KeyHolder;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.domain.Publisher;
-import io.github.scrvrdn.inventory.repositories.impl.PublisherRepositoryImpl.PublisherByBookIdMapper;
-import io.github.scrvrdn.inventory.repositories.impl.PublisherRepositoryImpl.PublisherRowMapper;
+import io.github.scrvrdn.inventory.dto.Publisher;
+import io.github.scrvrdn.inventory.mappers.PublisherByBookIdMapper;
+import io.github.scrvrdn.inventory.mappers.PublisherRowMapper;
 
 @ExtendWith(MockitoExtension.class)
 public class PublisherRepositoryImplTests {
@@ -101,20 +101,7 @@ public class PublisherRepositoryImplTests {
         );
     }
 
-    @Test
-    public void testThatFindPublisherGroupedByBookIdGeneratesCorrectSql() {
-        underTest.findPublishersGroupedByBookId();
-
-        String expectedSql = """
-                SELECT * FROM "publishers"
-                JOIN "published" ON "publishers"."id" = "published"."publisher_id";
-                """;
-
-        verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PublisherByBookIdMapper.class)
-        );
-    }
+    
 
     @Test
     public void testThatUpdateGeneratesCorrectSql() {

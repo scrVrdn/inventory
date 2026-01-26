@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import io.github.scrvrdn.inventory.domain.Book;
-import io.github.scrvrdn.inventory.domain.Person;
-import io.github.scrvrdn.inventory.domain.Publisher;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
+import io.github.scrvrdn.inventory.dto.Person;
+import io.github.scrvrdn.inventory.dto.Publisher;
+import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 
 public final class TestDataUtil {

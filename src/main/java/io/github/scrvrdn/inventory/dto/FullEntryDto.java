@@ -5,9 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import io.github.scrvrdn.inventory.domain.Book;
-import io.github.scrvrdn.inventory.domain.Person;
-import io.github.scrvrdn.inventory.domain.Publisher;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

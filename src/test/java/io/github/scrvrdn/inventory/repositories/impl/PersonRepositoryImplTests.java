@@ -25,9 +25,8 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.KeyHolder;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.domain.Person;
-import io.github.scrvrdn.inventory.repositories.impl.PersonRepositoryImpl.PersonByBookIdRowMapper;
-import io.github.scrvrdn.inventory.repositories.impl.PersonRepositoryImpl.PersonRowMapper;
+import io.github.scrvrdn.inventory.dto.Person;
+import io.github.scrvrdn.inventory.mappers.PersonRowMapper;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -83,42 +82,8 @@ public class PersonRepositoryImplTests {
 
         verify(jdbcTemplate).query(
             eq(expectedSql),
-            any(PersonRepositoryImpl.PersonRowMapper.class),
+            any(PersonRowMapper.class),
             eq(id)
-        );
-    }
-
-    @Test
-    public void testThatFindAuthorsByBookIdGeneratesCorrectSql() {
-        underTest.findAuthorsGroupedByBookId();
-
-        String expectedSql = """
-                SELECT * FROM "persons"
-                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
-                WHERE "role" = 'AUTHOR'
-                ORDER BY "order_index";
-                """;
-
-        verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PersonByBookIdRowMapper.class)
-        );
-    }
-
-    @Test
-    public void testThatFindEditorsByBookIdGeneratesCorrectSql() {
-        underTest.findEditorsGroupedByBookId();
-
-        String expectedSql = """
-                SELECT * FROM "persons"
-                JOIN "book_person" ON "persons"."id" = "book_person"."person_id"
-                WHERE "role" = 'EDITOR'
-                ORDER BY "order_index";
-                """;
-
-        verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PersonByBookIdRowMapper.class)
         );
     }
 
@@ -166,4 +131,5 @@ public class PersonRepositoryImplTests {
 
         verify(jdbcTemplate).update(expectedSql, id);
     }
+
 }

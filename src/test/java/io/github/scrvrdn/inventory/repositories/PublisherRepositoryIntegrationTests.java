@@ -14,8 +14,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.domain.Book;
-import io.github.scrvrdn.inventory.domain.Publisher;
+import io.github.scrvrdn.inventory.dto.Book;
+import io.github.scrvrdn.inventory.dto.Publisher;
 
 @SpringBootTest
 public class PublisherRepositoryIntegrationTests {
@@ -76,32 +76,7 @@ public class PublisherRepositoryIntegrationTests {
             .containsExactly(publisher1, publisher2, publisher3);
     }
 
-    @Test
-    public void testThatPublishersGroupedByBookIdCanBeRetrieved() {
-        Publisher publisher1 = TestDataUtil.createTestPublisher();
-        underTest.create(publisher1);
-        Publisher publisher2 = TestDataUtil.createTestPublisher2();
-        underTest.create(publisher2);
-        Publisher publisher3 = TestDataUtil.createTestPublisher3();
-        underTest.create(publisher3);
-
-        Book book1 = TestDataUtil.createTestBook();
-        bookRepository.create(book1);
-        Book book2 = TestDataUtil.createTestBook2();
-        bookRepository.create(book2);
-        Book book3 = TestDataUtil.createTestBook3();
-        bookRepository.create(book3);
-
-        bookRepository.assignToPublisher(book1, publisher1);
-        bookRepository.assignToPublisher(book2, publisher2);
-        bookRepository.assignToPublisher(book3, publisher3);
-
-        Map<Long, Publisher> result = underTest.findPublishersGroupedByBookId();
-        
-        assertThat(result)
-            .hasSize(3)
-            .containsExactly(Map.entry(book1.getId(), publisher1), Map.entry(book2.getId(), publisher2), Map.entry(book3.getId(), publisher3));
-    }
+    
 
     @Test
     public void testThatPublisherCanBeUpdated() {

@@ -1,4 +1,4 @@
-package io.github.scrvrdn.inventory.domain;
+package io.github.scrvrdn.inventory.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
