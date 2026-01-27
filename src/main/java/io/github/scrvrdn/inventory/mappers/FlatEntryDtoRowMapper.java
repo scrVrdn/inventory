@@ -4,23 +4,34 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 
+@Component
 public class FlatEntryDtoRowMapper implements RowMapper<FlatEntryDto> {
     @Override
     public FlatEntryDto mapRow(ResultSet rs, int rowNum) throws SQLException {
         int yearInt = rs.getInt("year");
         Integer year = rs.wasNull() ? null : yearInt;
 
-        return FlatEntryDto.builder()
-            .bookId(rs.getLong("id"))
-            .bookTitle(rs.getString("title"))
-            .bookYear(year)
-            .shelfMark(rs.getString("shelf_mark"))
-            .authors(rs.getString("authors"))
-            .editors(rs.getString("editors"))
-            .publisher(rs.getString("publisher"))
-            .build();
+        // return FlatEntryDto.builder()
+        //     .bookId(rs.getLong("id"))
+        //     .bookTitle(rs.getString("title"))
+        //     .bookYear(year)
+        //     .shelfMark(rs.getString("shelf_mark"))
+        //     .authors(rs.getString("authors"))
+        //     .editors(rs.getString("editors"))
+        //     .publisher(rs.getString("publisher"))
+        //     .build();
+        return new FlatEntryDto(
+                rs.getLong("id"),
+                rs.getString("title"),
+                year,
+                rs.getString("shelf_mark"),
+                rs.getString("authors"),
+                rs.getString("editors"),
+                rs.getString("publisher")
+            );
     }
 }

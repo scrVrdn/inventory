@@ -6,13 +6,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.Person;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,13 +21,11 @@ public class PersonRepositoryIntegrationTests {
 
     private final JdbcTemplate jdbcTemplate;
     private final PersonRepository underTest;
-    private final BookRepository bookRepository;
 
     @Autowired
-    public PersonRepositoryIntegrationTests(final JdbcTemplate jdbcTemplate, final PersonRepository underTest, final BookRepository bookRepository) {
+    public PersonRepositoryIntegrationTests(final JdbcTemplate jdbcTemplate, final PersonRepository underTest) {
         this.jdbcTemplate = jdbcTemplate;
         this.underTest = underTest;
-        this.bookRepository = bookRepository;
     }
 
     @BeforeEach

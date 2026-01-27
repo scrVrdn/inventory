@@ -23,8 +23,7 @@ import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import io.github.scrvrdn.inventory.mappers.EntryDtoExtractor;
 import io.github.scrvrdn.inventory.mappers.FlatEntryDtoRowMapper;
-import io.github.scrvrdn.inventory.repositories.BookRepository;
-import io.github.scrvrdn.inventory.services.facade.impl.EntryServiceImpl;
+import io.github.scrvrdn.inventory.services.BookService;
 
 @ExtendWith(MockitoExtension.class)
 public class EntryServiceImplTests {
@@ -33,7 +32,13 @@ public class EntryServiceImplTests {
     private JdbcTemplate jdbcTemplate;
 
     @Mock
-    private BookRepository bookRepository;
+    private BookService bookService;
+
+    @Mock
+    private EntryDtoExtractor entryDtoExtractor;
+
+    @Mock
+    private FlatEntryDtoRowMapper flatEntryDtoRowMapper;
 
     @Spy
     @InjectMocks
@@ -45,15 +50,16 @@ public class EntryServiceImplTests {
         when(mockBook.getId()).thenReturn(1L);        
         doReturn(mockBook).when(underTest).createEmptyBook();
 
-        FlatEntryDto expected = FlatEntryDto.builder()
-                                            .bookId(1L)
-                                            .build();
+        // FlatEntryDto expected = FlatEntryDto.builder()
+        //                                     .bookId(1L)
+        //                                     .build();
+        FlatEntryDto expected = new FlatEntryDto(1L, null, null, null, null, null, null);
 
 
         Optional<FlatEntryDto> result = underTest.createEmptyEntry();        
 
         assertThat(result.get()).isEqualTo(expected);        
-        verify(bookRepository).create(any(Book.class));
+        verify(bookService).create(any(Book.class));
     }
 
     @Test
@@ -89,12 +95,16 @@ public class EntryServiceImplTests {
                 SELECT
                     b."id", b."title", b."year", b."shelf_mark",
                     GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
                     ) AS "authors",
                     GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'EDITOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"    
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"    
                     ) AS "editors",
-                    "publishers"."location" || ': ' || "publishers"."name" AS "publisher"
+                    CASE
+                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                        THEN NULL
+                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                    END AS "publisher"
                 FROM "books" b
                 LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
                 LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
@@ -115,12 +125,16 @@ public class EntryServiceImplTests {
                 SELECT
                     b."id", b."title", b."year", b."shelf_mark",
                     GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
                     ) AS "authors",
                     GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'EDITOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
                     ) AS "editors",
-                    "publishers"."location" || ': ' || "publishers"."name" AS "publisher"
+                    CASE
+                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                        THEN NULL
+                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                    END AS "publisher"
                 FROM "books" b
                 LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
                 LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
@@ -133,10 +147,10 @@ public class EntryServiceImplTests {
     }
 
     @Test
-    public void testThatDeleteCallsBookRepositoryDelete() {
+    public void testThatDeleteCallsBookService() {
         long bookId = 1L;
         underTest.delete(bookId);
-        verify(bookRepository).delete(bookId);
+        verify(bookService).delete(bookId);
     }
 
 }

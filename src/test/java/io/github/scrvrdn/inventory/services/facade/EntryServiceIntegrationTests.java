@@ -51,12 +51,13 @@ public class EntryServiceIntegrationTests {
 
     @Test
     public void testThatEmptyFullEntryDtoCanBeRetrieved() {
-        Optional<FlatEntryDto> dto = underTest.createEmptyEntry();
+        FlatEntryDto dto = underTest.createEmptyEntry().orElseThrow();
+        long bookId = dto.bookId();
         FullEntryDto expected = FullEntryDto.builder()
-                                            .book(Book.builder().id(dto.get().getBookId()).build())
+                                            .book(Book.builder().id(bookId).build())
                                             .build();
 
-        Optional<FullEntryDto> result = underTest.findById(dto.get().getBookId());
+        Optional<FullEntryDto> result = underTest.findById(bookId);
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(expected);
     }
@@ -94,11 +95,12 @@ public class EntryServiceIntegrationTests {
 
     @Test
     public void testThatGetsEmptyFlatEntryDto() {
-        Optional<FlatEntryDto> dto = underTest.createEmptyEntry();
+        FlatEntryDto dto = underTest.createEmptyEntry().orElseThrow();
 
-        Optional<FlatEntryDto> result = underTest.getFlatEntryDto(dto.get().getBookId());
+        //Optional<FlatEntryDto> result = underTest.getFlatEntryDto(dto.getBookId());
+        Optional<FlatEntryDto> result = underTest.getFlatEntryDto(dto.bookId());
         assertThat(result).isPresent();
-        assertThat(result.get()).isEqualTo(dto.get());
+        assertThat(result.get()).isEqualTo(dto);
     }
 
     @Test
@@ -122,8 +124,6 @@ public class EntryServiceIntegrationTests {
         FullEntryDto entry = TestDataUtil.createTestEntry();
         underTest.create(entry);
 
-        // entry.getBook().setTitle("UPDATED");
-        // entry.getUpdatedFields().add("book");
         entry.getAuthors().add(TestDataUtil.createTestPerson2());
         
         underTest.update(entry);

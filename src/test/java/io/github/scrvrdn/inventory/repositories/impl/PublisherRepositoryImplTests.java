@@ -26,7 +26,6 @@ import org.springframework.jdbc.support.KeyHolder;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
 import io.github.scrvrdn.inventory.dto.Publisher;
-import io.github.scrvrdn.inventory.mappers.PublisherByBookIdMapper;
 import io.github.scrvrdn.inventory.mappers.PublisherRowMapper;
 
 @ExtendWith(MockitoExtension.class)

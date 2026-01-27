@@ -12,7 +12,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -21,25 +20,22 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.KeyHolder;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
 import io.github.scrvrdn.inventory.dto.Book;
-import io.github.scrvrdn.inventory.dto.Person;
-import io.github.scrvrdn.inventory.dto.Publisher;
 import io.github.scrvrdn.inventory.mappers.BookRowMapper;
-import io.github.scrvrdn.inventory.mappers.PersonRowMapper;
-import io.github.scrvrdn.inventory.mappers.PublisherRowMapper;
 
 @ExtendWith(MockitoExtension.class)
 public class BookRepositoryImplTests {
 
     @Mock
     private JdbcTemplate jdbcTemplate;
+
+    @Mock
+    private BookRowMapper bookRowMapper;
 
     @InjectMocks
     private BookRepositoryImpl underTest;

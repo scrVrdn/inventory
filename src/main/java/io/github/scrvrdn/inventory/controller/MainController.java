@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.services.facade.EntryService;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -14,7 +15,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.PropertyValueFactory;
 
 
 
@@ -56,18 +56,18 @@ public class MainController {
 
     @FXML
     private void initialize() {
-        id.setCellValueFactory(new PropertyValueFactory<>("bookId"));
-        authors.setCellValueFactory(new PropertyValueFactory<>("authors"));
-        title.setCellValueFactory(new PropertyValueFactory<>("bookTitle"));
-        editors.setCellValueFactory(new PropertyValueFactory<>("editors"));
-        publisher.setCellValueFactory(new PropertyValueFactory<>("publisher"));
-        year.setCellValueFactory(new PropertyValueFactory<>("bookYear"));
-        shelfMark.setCellValueFactory(new PropertyValueFactory<>("shelfMark"));
+        id.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().bookId()));
+        authors.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().authors()));
+        title.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().bookTitle()));
+        editors.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().editors()));
+        publisher.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().publisher()));
+        year.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().bookYear()));
+        shelfMark.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().shelfMark()));
 
         table.setItems(getEntries());
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
-                Long entryId = newSelection.getBookId();
+                Long entryId = newSelection.bookId();
                 entryService.findById(entryId)
                             .ifPresent(this::showDetails);
             } else {
@@ -99,7 +99,7 @@ public class MainController {
     private void handleDeleteEntryButton() {
         FlatEntryDto selected = table.getSelectionModel().getSelectedItem();
         if (selected != null) {
-            entryService.delete(selected.getBookId());
+            entryService.delete(selected.bookId());
             table.getItems().remove(selected);
         }
     }

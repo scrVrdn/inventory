@@ -122,18 +122,34 @@ public final class TestDataUtil {
     }
 
     public static FlatEntryDto createEntryRowFromEntry(FullEntryDto entry) {
-        return FlatEntryDto.builder()
-                    .bookId(entry.getBook().getId())
-                    .bookTitle(entry.getBook().getTitle())
-                    .bookYear(entry.getBook().getYear())
-                    .shelfMark(entry.getBook().getShelfMark())
-                    .authors(entry.getAuthors().stream()
-                            .map(a -> a.getLastName() + ", " + a.getFirstNames())
-                            .collect(Collectors.joining("; ")))
-                    .editors(entry.getEditors().stream()
-                            .map(e -> e.getLastName() + ", " + e.getFirstNames())
-                            .collect(Collectors.joining("; ")))
-                    .publisher(entry.getPublisher().getLocation() + ": " + entry.getPublisher().getName())
-                    .build();
+        return new FlatEntryDto(
+                        entry.getBook().getId(),
+                        entry.getBook().getTitle(),
+                        entry.getBook().getYear(),
+                        entry.getBook().getShelfMark(),
+                        entry.getAuthors().stream()
+                            .map(a -> a.toString())
+                            .collect(Collectors.joining("; ")),
+                        entry.getEditors().stream()
+                            .map(e -> e.toString())
+                            .collect(Collectors.joining("; ")),
+                        entry.getPublisher().toString()
+                    );
+
+
+
+        // return FlatEntryDto.builder()
+        //             .bookId(entry.getBook().getId())
+        //             .bookTitle(entry.getBook().getTitle())
+        //             .bookYear(entry.getBook().getYear())
+        //             .shelfMark(entry.getBook().getShelfMark())
+        //             .authors(entry.getAuthors().stream()
+        //                     .map(a -> a.getLastName() + ", " + a.getFirstNames())
+        //                     .collect(Collectors.joining("; ")))
+        //             .editors(entry.getEditors().stream()
+        //                     .map(e -> e.getLastName() + ", " + e.getFirstNames())
+        //                     .collect(Collectors.joining("; ")))
+        //             .publisher(entry.getPublisher().getLocation() + ": " + entry.getPublisher().getName())
+        //             .build();
     }
 }

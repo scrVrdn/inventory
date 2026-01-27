@@ -20,9 +20,11 @@ import io.github.scrvrdn.inventory.repositories.BookRepository;
 public class BookRepositoryImpl implements BookRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final BookRowMapper bookRowMapper;
 
-    public BookRepositoryImpl(final JdbcTemplate jdbcTemplate) {
+    public BookRepositoryImpl(final JdbcTemplate jdbcTemplate, final BookRowMapper bookRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
+        this.bookRowMapper = bookRowMapper;
     }
 
     @Override
@@ -78,7 +80,7 @@ public class BookRepositoryImpl implements BookRepository {
         String query = """
                 SELECT * FROM "books" WHERE "id" = ?;
                 """;
-        List<Book> result = jdbcTemplate.query(query, new BookRowMapper(), id);        
+        List<Book> result = jdbcTemplate.query(query, bookRowMapper, id);        
         return result.stream().findFirst();
     }
 
@@ -87,7 +89,7 @@ public class BookRepositoryImpl implements BookRepository {
         String query = """
                 SELECT * FROM "books";
                 """;
-        return jdbcTemplate.query(query, new BookRowMapper());
+        return jdbcTemplate.query(query, bookRowMapper);
     }
 
     @Override

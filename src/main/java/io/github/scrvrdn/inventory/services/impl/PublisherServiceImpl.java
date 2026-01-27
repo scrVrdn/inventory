@@ -17,7 +17,7 @@ public class PublisherServiceImpl implements PublisherService {
 
     @Override
     public Long updatePublisherByNameAndLocation(Publisher publisher) {
-        publisherRepository.create(publisher);
+        if (publisher.getName() != null || publisher.getLocation() != null) publisherRepository.create(publisher);
         return publisher.getId();
     }
 }

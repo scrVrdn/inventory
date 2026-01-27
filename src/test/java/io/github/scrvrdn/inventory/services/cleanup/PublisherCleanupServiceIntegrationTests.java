@@ -11,7 +11,6 @@ import io.github.scrvrdn.inventory.dto.Publisher;
 import io.github.scrvrdn.inventory.repositories.BookPublisherRepository;
 import io.github.scrvrdn.inventory.repositories.BookRepository;
 import io.github.scrvrdn.inventory.repositories.PublisherRepository;
-import io.github.scrvrdn.inventory.services.cleanup.PublisherCleanupService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

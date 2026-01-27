@@ -3,7 +3,6 @@ package io.github.scrvrdn.inventory.repositories;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +13,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.Publisher;
 
 @SpringBootTest
@@ -22,13 +20,11 @@ public class PublisherRepositoryIntegrationTests {
 
     private final JdbcTemplate jdbcTemplate;
     private final PublisherRepository underTest;
-    private final BookRepository bookRepository;
 
     @Autowired
-    public PublisherRepositoryIntegrationTests(final JdbcTemplate jdbcTemplate, final PublisherRepository underTest, final BookRepository bookRepository) {
+    public PublisherRepositoryIntegrationTests(final JdbcTemplate jdbcTemplate, final PublisherRepository underTest) {
         this.jdbcTemplate = jdbcTemplate;
         this.underTest = underTest;
-        this.bookRepository = bookRepository;
     }
 
     @BeforeEach

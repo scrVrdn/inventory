@@ -26,21 +26,26 @@ public class BookServiceImpl implements BookService {
     }
 
     @Transactional
+    public void create(Book book) {
+        bookRepository.create(book);
+    }
+
+    @Transactional
     public void update(long bookId, BookUpdateRequest request) {
         Book book = bookRepository.findById(bookId).orElseThrow();
         
-        book.setTitle(request.getTitle());
-        book.setYear(request.getYear());
-        book.setIsbn10(request.getIsbn10());
-        book.setIsbn13(request.getIsbn13());
-        book.setShelfMark(request.getShelfMark());
+        book.setTitle(request.title());
+        book.setYear(request.year());
+        book.setIsbn10(request.isbn10());
+        book.setIsbn13(request.isbn13());
+        book.setShelfMark(request.shelfMark());
 
         bookRepository.update(book);
 
-        updateAuthors(bookId, request.getAuthorIds());
-        updateEditors(bookId, request.getEditorIds());
+        updateAuthors(bookId, request.authorIds());
+        updateEditors(bookId, request.editorIds());
 
-        if (request.getPublisherId() != null) bookPublisherRepository.assignPublisherToBook(bookId, request.getPublisherId());        
+        if (request.publisherId() != null) bookPublisherRepository.assignPublisherToBook(bookId, request.publisherId());   
     }
 
     private void updateAuthors(long bookId, List<Long> requestedAuthors) {
@@ -65,5 +70,10 @@ public class BookServiceImpl implements BookService {
     private List<Long> detectRemovedEditors(long bookid, List<Long> requestedEditors) {
         List<Long> currentEditorIds = bookPersonRepository.findEditorIdsByBookId(bookid);
         return currentEditorIds.stream().filter(id -> !requestedEditors.contains(id)).toList();
+    }
+
+    @Override
+    public void delete(long bookId) {
+        bookRepository.delete(bookId);
     }
 }

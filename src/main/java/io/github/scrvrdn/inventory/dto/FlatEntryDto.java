@@ -1,21 +1,11 @@
 package io.github.scrvrdn.inventory.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class FlatEntryDto {
-    
-    private Long bookId;
-    private String bookTitle;
-    private Integer bookYear;
-    private String shelfMark;
-    private String authors;
-    private String editors;
-    private String publisher;    
-}
+public record FlatEntryDto(
+            Long bookId,
+            String bookTitle,
+            Integer bookYear,
+            String shelfMark,
+            String authors,
+            String editors,
+            String publisher
+        ) {}

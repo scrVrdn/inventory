@@ -6,12 +6,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.stereotype.Component;
 
 import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Person;
 import io.github.scrvrdn.inventory.dto.Publisher;
 
+
+@Component
 public class EntryDtoExtractor implements ResultSetExtractor<FullEntryDto> {
     @Override
     public FullEntryDto extractData(ResultSet rs) throws SQLException {

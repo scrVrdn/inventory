@@ -1,5 +1,6 @@
 package io.github.scrvrdn.inventory.services.facade.impl;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +40,8 @@ public class EntryServiceImpl implements EntryService {
     private final BookService bookService;
     private final PersonService personService;
     private final PublisherService publisherService;
+    private final EntryDtoExtractor entryDtoExtractor;
+    private final FlatEntryDtoRowMapper flatEntryDtoRowMapper;
 
     public EntryServiceImpl(
         final JdbcTemplate jdbcTemplate,
@@ -49,7 +52,9 @@ public class EntryServiceImpl implements EntryService {
         final BookPublisherRepository bookPublisherRepository,
         final BookService bookService,
         final PersonService personService,
-        final PublisherService publisherService
+        final PublisherService publisherService,
+        final EntryDtoExtractor entryDtoExtractor,
+        final FlatEntryDtoRowMapper flatEntryDtoRowMapper
     ) {
         this.jdbcTemplate = jdbcTemplate;
         this.bookRepository = bookRepository;
@@ -61,15 +66,18 @@ public class EntryServiceImpl implements EntryService {
         this.bookService = bookService;
         this.personService = personService;
         this.publisherService = publisherService;
+        this.entryDtoExtractor = entryDtoExtractor;
+        this.flatEntryDtoRowMapper = flatEntryDtoRowMapper;
     }
 
     @Override
     public Optional<FlatEntryDto> createEmptyEntry() {
         Book emptyBook = createEmptyBook();
-        bookRepository.create(emptyBook);
-        return Optional.ofNullable(FlatEntryDto.builder()
-                                                .bookId(emptyBook.getId())
-                                                .build());
+        bookService.create(emptyBook);
+        // return Optional.ofNullable(FlatEntryDto.builder()
+        //                                         .bookId(emptyBook.getId())
+        //                                         .build());
+        return Optional.of(new FlatEntryDto(emptyBook.getId(), null, null, null, null, null, null));
     }
 
     protected Book createEmptyBook() {
@@ -83,7 +91,7 @@ public class EntryServiceImpl implements EntryService {
     }
 
     private void createEntities(FullEntryDto entryDto) {
-        bookRepository.create(entryDto.getBook());
+        bookService.create(entryDto.getBook());
         personRepository.createAll(entryDto.getAuthors());
         personRepository.createAll(entryDto.getEditors());
         publisherRepository.create(entryDto.getPublisher());
@@ -123,7 +131,7 @@ public class EntryServiceImpl implements EntryService {
                 ORDER BY "book_person"."role", "book_person"."order_index";
                 """;
 
-        FullEntryDto entry = jdbcTemplate.query(query, new EntryDtoExtractor(), id);
+        FullEntryDto entry = jdbcTemplate.query(query, entryDtoExtractor, id);
         return Optional.ofNullable(entry);
     }
 
@@ -150,12 +158,16 @@ public class EntryServiceImpl implements EntryService {
                 SELECT 
                     b."id", b."title", b."year", b."shelf_mark",
                     GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
                     ) AS "authors",
                     GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'EDITOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
                     ) AS "editors",
-                    "publishers"."location" || ': ' || "publishers"."name" AS "publisher"
+                    CASE
+                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                        THEN NULL
+                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                    END AS "publisher"
                 FROM "books" b
                 LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
                 LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
@@ -165,7 +177,7 @@ public class EntryServiceImpl implements EntryService {
                 GROUP BY b."id";
                 """;
                 
-        List<FlatEntryDto> result = jdbcTemplate.query(query, new FlatEntryDtoRowMapper(), bookId);
+        List<FlatEntryDto> result = jdbcTemplate.query(query, flatEntryDtoRowMapper, bookId);
         return result.stream().findFirst();
     }
 
@@ -175,12 +187,16 @@ public class EntryServiceImpl implements EntryService {
                 SELECT
                     b."id", b."title", b."year", b."shelf_mark",
                     GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
                     ) AS "authors",
                     GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'EDITOR' THEN p."last_name" || ', ' || p."first_names" END, '; ' ORDER BY "book_person"."order_index"
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
                     ) AS "editors",
-                    "publishers"."location" || ': ' || "publishers"."name" AS "publisher"
+                    CASE
+                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                        THEN NULL
+                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                    END AS "publisher"
                 FROM "books" b
                 LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
                 LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
@@ -194,64 +210,92 @@ public class EntryServiceImpl implements EntryService {
 
     @Override
     public FlatEntryDto update(FullEntryDto entry) {
+        convertEmptyStringsToNull(entry);
 
         List<Long> authorIds = personService.updateAuthorsByName(entry.getAuthors());
         List<Long> editorIds = personService.updateEditorsByName(entry.getEditors());
         Long publisherId = publisherService.updatePublisherByNameAndLocation(entry.getPublisher());
-        
-        BookUpdateRequest request = getBookUpdateRequest(entry.getBook(), authorIds, editorIds, publisherId);
+        Book book = entry.getBook();
+
+        BookUpdateRequest request = new BookUpdateRequest(
+                                            book.getTitle(),
+                                            book.getYear(),
+                                            book.getIsbn10(),
+                                            book.getIsbn13(),
+                                            book.getShelfMark(),
+                                            authorIds,
+                                            editorIds,
+                                            publisherId
+                                        );
+
         bookService.update(entry.getBook().getId(), request);
 
         return mapFullDtoToFlatDto(entry);
     }
 
-    private BookUpdateRequest getBookUpdateRequest(Book book, List<Long> authorIds, List<Long> editorIds, Long publisherId) {
-               
-        String title = book.getTitle();
-        if (title != null && title.isEmpty()) title = null;
+    private void convertEmptyStringsToNull(FullEntryDto entry) {
+        convertEmptyStringsToNull(entry.getBook());
 
-        Integer year = book.getYear();
+        for (Person a : entry.getAuthors()) {
+            convertEmptyStringsToNull(a);
+        }
+        
+        for (Person e : entry.getEditors()) {
+            convertEmptyStringsToNull(e);
+        }
 
-        String isbn10 = book.getIsbn10();
-        if (isbn10 != null && isbn10.isEmpty()) isbn10 = null;
+        convertEmptyStringsToNull(entry.getPublisher());
+    }
 
-        String isbn13 = book.getIsbn13();
-        if (isbn13 != null && isbn13.isEmpty()) isbn13 = null;
-
-        String shelfMark = book.getShelfMark();
-        if (shelfMark != null && shelfMark.isEmpty()) shelfMark = null;
-
-        return BookUpdateRequest.builder()
-                            .title(title)
-                            .year(year)
-                            .isbn10(isbn10)
-                            .isbn13(isbn13)
-                            .shelfMark(shelfMark)
-                            .authorIds(authorIds)
-                            .editorIds(editorIds)
-                            .publisherId(publisherId)
-                            .build();
+    private void convertEmptyStringsToNull(Object obj) {
+        Arrays.stream(obj.getClass().getDeclaredFields())
+                .filter(f -> f.getType() == String.class)
+                .forEach(f -> {
+                    f.setAccessible(true);
+                    try {
+                        String value = (String) f.get(obj);
+                        if (value != null && value.trim().isEmpty()) {
+                            f.set(obj, null);
+                        }
+                    } catch (IllegalAccessException e) {
+                        System.err.println(e.getMessage());
+                    }
+                });
     }
 
     private FlatEntryDto mapFullDtoToFlatDto(FullEntryDto fullDto) {
 
-        return FlatEntryDto.builder()
-                    .bookId(fullDto.getBook().getId())
-                    .bookTitle(fullDto.getBook().getTitle())
-                    .bookYear(fullDto.getBook().getYear())
-                    .shelfMark(fullDto.getBook().getShelfMark())
-                    .authors(fullDto.getAuthors().stream()
-                            .map(a -> a.getLastName() + ", " + a.getFirstNames())
-                            .collect(Collectors.joining("; ")))
-                    .editors(fullDto.getEditors().stream()
-                            .map(e -> e.getLastName() + ", " + e.getFirstNames())
-                            .collect(Collectors.joining("; ")))
-                    .publisher(fullDto.getPublisher().toString())
-                    .build();
+        // return FlatEntryDto.builder()
+        //             .bookId(fullDto.getBook().getId())
+        //             .bookTitle(fullDto.getBook().getTitle())
+        //             .bookYear(fullDto.getBook().getYear())
+        //             .shelfMark(fullDto.getBook().getShelfMark())
+        //             .authors(fullDto.getAuthors().stream()
+        //                     .map(a -> a.toString())
+        //                     .collect(Collectors.joining("; ")))
+        //             .editors(fullDto.getEditors().stream()
+        //                     .map(e -> e.toString())
+        //                     .collect(Collectors.joining("; ")))
+        //             .publisher(fullDto.getPublisher().toString())
+        //             .build();
+
+        return new FlatEntryDto(
+            fullDto.getBook().getId(),
+            fullDto.getBook().getTitle(),
+            fullDto.getBook().getYear(),
+            fullDto.getBook().getShelfMark(),
+            fullDto.getAuthors().stream()
+                .map(a -> a.toString())
+                .collect(Collectors.joining("; ")),
+            fullDto.getEditors().stream()
+                .map(e -> e.toString())
+                .collect(Collectors.joining("; ")),
+            fullDto.getPublisher().toString()
+        );
     }
 
     @Override
     public void delete(long id) {
-        bookRepository.delete(id);
+        bookService.delete(id);
     }
 }
