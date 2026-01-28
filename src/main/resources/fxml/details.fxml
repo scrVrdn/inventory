@@ -8,64 +8,68 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="detailsPane" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="io.github.scrvrdn.inventory.controller.DetailsPaneController">
-    <center>
-        <ScrollPane>
-            <VBox >
-                <HBox>
-                    <Label text="Title" styleClass="details-label"/>
-                    <DynamicTextField fx:id="titleField" styleClass="details-field"/>
-                </HBox>
-                <VBox fx:id="authorBox">
+<StackPane fx:id="detailsPane" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="io.github.scrvrdn.inventory.controls.DetailsPane">
+    <Label fx:id="nothingSelectedLabel" text="select an entry"/>
+    <BorderPane fx:id="details" visible="false">
+        <center>
+            <ScrollPane>
+                <VBox >
                     <HBox>
-                        <Label text="Author" styleClass="details-label"/>
-                        <DynamicTextField fx:id="authorLastNameField" styleClass="details-field"/>
-                        <Label text="," styleClass="details-delimiter"/>
-                        <DynamicTextField fx:id="authorFirstNameField" styleClass="details-field"/>
-                        <Button text="+" onAction="#addAuthorTextField"/>
-                        <Button text="-" onAction="#deleteAuthorTextField"/>
+                        <Label text="Title" styleClass="details-label"/>
+                        <DynamicTextField fx:id="titleField" styleClass="details-field"/>
+                    </HBox>
+                    <VBox fx:id="authorBox">
+                        <HBox>
+                            <Label text="Author" styleClass="details-label"/>
+                            <DynamicTextField fx:id="authorLastNameField" styleClass="details-field"/>
+                            <Label text="," styleClass="details-delimiter"/>
+                            <DynamicTextField fx:id="authorFirstNameField" styleClass="details-field"/>
+                            <Button text="+" onAction="#addAuthorTextField"/>
+                            <Button text="-" onAction="#deleteAuthorTextField"/>
+                        </HBox>
+                    </VBox>
+                    <VBox fx:id="editorBox">
+                        <HBox>
+                            <Label text="Editor" styleClass="details-label"/>
+                            <DynamicTextField fx:id="editorLastNameField" styleClass="details-field"/>
+                            <Label text="," styleClass="details-delimiter" />
+                            <DynamicTextField fx:id="editorFirstNameField" styleClass="details-field"/>
+                            <Button text="+" onAction="#addEditorTextField"/>
+                            <Button text="-" onAction="#deleteEditorTextField"/>
+                        </HBox>
+                    </VBox>
+                    <HBox>
+                        <Label text="Place" styleClass="details-label"/>
+                        <DynamicTextField fx:id="publisherPlaceField" styleClass="details-field"/>
+                    </HBox>
+                    <HBox>
+                        <Label text="Publisher" styleClass="details-label"/>
+                        <DynamicTextField fx:id="publisherNameField" styleClass="details-field"/>
+                    </HBox>
+                    <HBox>
+                        <Label text="Year" styleClass="details-label"/>
+                        <DynamicTextField fx:id="yearField" styleClass="details-field"/>
+                    </HBox>
+                    <HBox>
+                        <Label text="ISBN-10" styleClass="details-label"/>
+                        <DynamicTextField fx:id="isbn10Field" styleClass="details-field"/>
+                    </HBox>
+                    <HBox>
+                        <Label text="ISBN-13" styleClass="details-label"/>
+                        <DynamicTextField fx:id="isbn13Field" styleClass="details-field"/>
+                    </HBox>
+                    <HBox>
+                        <Label text="Shelf Mark" styleClass="details-label"/>
+                        <DynamicTextField fx:id="shelfMarkField" styleClass="details-field"/>
                     </HBox>
                 </VBox>
-                <VBox fx:id="editorBox">
-                    <HBox>
-                        <Label text="Editor" styleClass="details-label"/>
-                        <DynamicTextField fx:id="editorLastNameField" styleClass="details-field"/>
-                        <Label text="," styleClass="details-delimiter" />
-                        <DynamicTextField fx:id="editorFirstNameField" styleClass="details-field"/>
-                        <Button text="+" onAction="#addEditorTextField"/>
-                        <Button text="-" onAction="#deleteEditorTextField"/>
-                    </HBox>
-                </VBox>
-                <HBox>
-                    <Label text="Place" styleClass="details-label"/>
-                    <DynamicTextField fx:id="publisherPlaceField" styleClass="details-field"/>
-                </HBox>
-                <HBox>
-                    <Label text="Publisher" styleClass="details-label"/>
-                    <DynamicTextField fx:id="publisherNameField" styleClass="details-field"/>
-                </HBox>
-                <HBox>
-                    <Label text="Year" styleClass="details-label"/>
-                    <DynamicTextField fx:id="yearField" styleClass="details-field"/>
-                </HBox>
-                <HBox>
-                    <Label text="ISBN-10" styleClass="details-label"/>
-                    <DynamicTextField fx:id="isbn10Field" styleClass="details-field"/>
-                </HBox>
-                <HBox>
-                    <Label text="ISBN-13" styleClass="details-label"/>
-                    <DynamicTextField fx:id="isbn13Field" styleClass="details-field"/>
-                </HBox>
-                <HBox>
-                    <Label text="Shelf Mark" styleClass="details-label"/>
-                    <DynamicTextField fx:id="shelfMarkField" styleClass="details-field"/>
-                </HBox>
-            </VBox>
-        </ScrollPane>
-    </center>
-    <bottom>
-        <Button text="Save" onAction="#onSave"/>
-    </bottom>
-</BorderPane>
+            </ScrollPane>
+        </center>
+        <bottom>
+            <Button text="Save" onAction="#onSave"/>
+        </bottom>
+    </BorderPane>
+</StackPane>

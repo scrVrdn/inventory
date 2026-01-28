@@ -1,4 +1,4 @@
-package io.github.scrvrdn.inventory.controller;
+package io.github.scrvrdn.inventory.controls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +7,6 @@ import java.util.function.Consumer;
 
 import org.springframework.stereotype.Component;
 
-import io.github.scrvrdn.inventory.controls.DynamicTextField;
 import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Person;
@@ -18,11 +17,12 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 @Component
-public class DetailsPaneController {
+public class DetailsPane {
     private static final int LAST_NAME_IDX = 1;
     private static final int FIRST_NAME_IDX = 3;
 
@@ -30,24 +30,25 @@ public class DetailsPaneController {
 
     private Consumer<FullEntryDto> saveCallback;
 
+    @FXML private BorderPane details;
+    @FXML private Label nothingSelectedLabel;
+
     @FXML private DynamicTextField titleField;
-
     @FXML private VBox authorBox;
-
     @FXML private VBox editorBox;
-
     @FXML private DynamicTextField publisherPlaceField;
-
     @FXML private DynamicTextField publisherNameField;
-
     @FXML private DynamicTextField yearField;
-
     @FXML private DynamicTextField isbn10Field;
-
     @FXML private DynamicTextField isbn13Field;
-
     @FXML private DynamicTextField shelfMarkField;
 
+    public void setVisibility(boolean visible) {
+        details.setVisible(visible);
+        details.setManaged(visible);
+        nothingSelectedLabel.setVisible(!visible);
+        nothingSelectedLabel.setManaged(!visible);
+    }
    
     public void showDetails(FullEntryDto entry) {
         this.entry = entry;
@@ -60,7 +61,7 @@ public class DetailsPaneController {
 
     private void populateBookDetails() {
          if (entry.getBook() != null) {
-           titleField.setText(getNullSafeString(entry.getBook().getTitle()));            
+            titleField.setText(getNullSafeString(entry.getBook().getTitle()));            
             yearField.setText(Objects.toString(entry.getBook().getYear(), ""));
             isbn10Field.setText(getNullSafeString(entry.getBook().getIsbn10()));
             isbn13Field.setText(getNullSafeString(entry.getBook().getIsbn13()));

@@ -74,9 +74,6 @@ public class EntryServiceImpl implements EntryService {
     public Optional<FlatEntryDto> createEmptyEntry() {
         Book emptyBook = createEmptyBook();
         bookService.create(emptyBook);
-        // return Optional.ofNullable(FlatEntryDto.builder()
-        //                                         .bookId(emptyBook.getId())
-        //                                         .build());
         return Optional.of(new FlatEntryDto(emptyBook.getId(), null, null, null, null, null, null));
     }
 
@@ -205,7 +202,7 @@ public class EntryServiceImpl implements EntryService {
                 GROUP BY b."id";
                 """;
 
-        return jdbcTemplate.query(query, new FlatEntryDtoRowMapper());
+        return jdbcTemplate.query(query, flatEntryDtoRowMapper);
     }
 
     @Override
@@ -264,21 +261,6 @@ public class EntryServiceImpl implements EntryService {
     }
 
     private FlatEntryDto mapFullDtoToFlatDto(FullEntryDto fullDto) {
-
-        // return FlatEntryDto.builder()
-        //             .bookId(fullDto.getBook().getId())
-        //             .bookTitle(fullDto.getBook().getTitle())
-        //             .bookYear(fullDto.getBook().getYear())
-        //             .shelfMark(fullDto.getBook().getShelfMark())
-        //             .authors(fullDto.getAuthors().stream()
-        //                     .map(a -> a.toString())
-        //                     .collect(Collectors.joining("; ")))
-        //             .editors(fullDto.getEditors().stream()
-        //                     .map(e -> e.toString())
-        //                     .collect(Collectors.joining("; ")))
-        //             .publisher(fullDto.getPublisher().toString())
-        //             .build();
-
         return new FlatEntryDto(
             fullDto.getBook().getId(),
             fullDto.getBook().getTitle(),

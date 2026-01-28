@@ -6,6 +6,7 @@ import org.springframework.stereotype.Controller;
 
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.services.facade.EntryService;
+import io.github.scrvrdn.inventory.controls.DetailsPane;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
@@ -47,9 +48,9 @@ public class MainController {
     @FXML private Button addNewEntryButton;
     @FXML private Button deleteEntryButton;
 
-    private DetailsPaneController detailsPane;
+    private DetailsPane detailsPane;
 
-    public MainController(final EntryService entryService, DetailsPaneController detailsPaneController) {
+    public MainController(final EntryService entryService, DetailsPane detailsPaneController) {
         this.entryService = entryService;
         this.detailsPane = detailsPaneController;
     }
@@ -67,11 +68,13 @@ public class MainController {
         table.setItems(getEntries());
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
+                detailsPane.setVisibility(true);
                 Long entryId = newSelection.bookId();
                 entryService.findById(entryId)
                             .ifPresent(this::showDetails);
             } else {
-                showDetails(FullEntryDto.builder().build());
+                //showDetails(FullEntryDto.builder().build());
+                detailsPane.setVisibility(false);
             }
         });
 
