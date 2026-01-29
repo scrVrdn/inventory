@@ -1,7 +1,5 @@
 package io.github.scrvrdn.inventory.repositories.impl;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import org.junit.jupiter.api.Test;
@@ -43,11 +41,7 @@ public class BookPublisherRepositoryImplTests {
 
         underTest.assignPublisherToBook(bookId, publisherId);
 
-        verify(jdbcTemplate).update(
-            expectedSql,
-            bookId,
-            publisherId
-        );
+        verify(jdbcTemplate).update(expectedSql, bookId, publisherId);
     }
 
      @Test
@@ -76,11 +70,7 @@ public class BookPublisherRepositoryImplTests {
                 WHERE "book_id" = ? AND "publisher_id" = ?;
                 """;
 
-        verify(jdbcTemplate).update(
-            expectedSql,
-            bookId,
-            publisherId
-        );
+        verify(jdbcTemplate).update(expectedSql, bookId, publisherId);
     }
 
     @Test

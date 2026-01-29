@@ -1,7 +1,5 @@
 package io.github.scrvrdn.inventory.services.facade.impl;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -54,8 +52,8 @@ public class EntryServiceImplTests {
 
         Optional<FlatEntryDto> result = underTest.createEmptyEntry();        
 
-        assertThat(result.get()).isEqualTo(expected);        
-        verify(bookService).create(any(Book.class));
+        assertThat(result.get()).isEqualTo(expected);
+        verify(bookService).create(mockBook);
     }
 
     @Test
