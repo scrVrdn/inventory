@@ -19,9 +19,11 @@ import io.github.scrvrdn.inventory.repositories.PublisherRepository;
 public class PublisherRepositoryImpl implements PublisherRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final PublisherRowMapper publisherRowMapper;
     
-    public PublisherRepositoryImpl(final JdbcTemplate jdbcTemplate) {
+    public PublisherRepositoryImpl(final JdbcTemplate jdbcTemplate, final PublisherRowMapper publisherRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
+        this.publisherRowMapper = publisherRowMapper;
     }
 
     @Override
@@ -74,7 +76,7 @@ public class PublisherRepositoryImpl implements PublisherRepository {
         String query = """
                 SELECT * FROM "publishers" WHERE "id" = ?;
                 """;
-        List<Publisher> result = jdbcTemplate.query(query, new PublisherRowMapper(),id);
+        List<Publisher> result = jdbcTemplate.query(query, publisherRowMapper,id);
         return result.stream().findFirst();
     }
 
@@ -83,7 +85,7 @@ public class PublisherRepositoryImpl implements PublisherRepository {
         String query ="""
                 SELECT * FROM "publishers";
                 """;
-        return jdbcTemplate.query(query, new PublisherRowMapper());
+        return jdbcTemplate.query(query, publisherRowMapper);
     }
 
 

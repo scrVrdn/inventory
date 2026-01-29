@@ -33,18 +33,6 @@ public class MainController {
     @FXML private TableColumn<FlatEntryDto, Integer> year;
     @FXML private TableColumn<FlatEntryDto, String> shelfMark;
 
-    @FXML private TextField titleField;
-    @FXML private TextField authorLastNameField;
-    @FXML private TextField authorFirstNameField;
-    @FXML private TextField editorLastNameField;
-    @FXML private TextField editorFirstNameField;
-    @FXML private TextField publisherNameField;
-    @FXML private TextField publisherPlaceField;
-    @FXML private TextField yearField;
-    @FXML private TextField isbn10Field;
-    @FXML private TextField isbn13Field;
-    @FXML private TextField shelfMarkField;
-
     @FXML private Button addNewEntryButton;
     @FXML private Button deleteEntryButton;
 
@@ -73,7 +61,6 @@ public class MainController {
                 entryService.findById(entryId)
                             .ifPresent(this::showDetails);
             } else {
-                //showDetails(FullEntryDto.builder().build());
                 detailsPane.setVisibility(false);
             }
         });

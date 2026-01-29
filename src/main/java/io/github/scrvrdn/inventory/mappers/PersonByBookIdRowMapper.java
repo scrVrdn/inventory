@@ -6,9 +6,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import io.github.scrvrdn.inventory.dto.Person;
 
+@Component
 public class PersonByBookIdRowMapper implements RowMapper<Entry<Long, Person>> {
     @Override
     public Entry<Long, Person> mapRow(ResultSet resultSet, int rowNum) throws SQLException {

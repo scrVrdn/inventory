@@ -83,9 +83,9 @@ public class BookRepositoryImplTests {
                 """;
 
         verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(BookRowMapper.class),
-            eq(id)
+            expectedSql,
+            bookRowMapper,
+            id
         );
 
     }
@@ -99,8 +99,8 @@ public class BookRepositoryImplTests {
                 """;
 
         verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(BookRowMapper.class)
+            expectedSql,
+            bookRowMapper
         );
     }
 
@@ -137,12 +137,5 @@ public class BookRepositoryImplTests {
                 """;
         verify(jdbcTemplate).update(expectedSql, id);
     }
-
-       
-    
-
-    
-
-   
 
 }

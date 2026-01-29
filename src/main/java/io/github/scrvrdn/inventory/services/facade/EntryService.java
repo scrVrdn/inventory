@@ -12,8 +12,6 @@ public interface EntryService {
 
     Optional<FlatEntryDto> createEmptyEntry();
 
-    void create(FullEntryDto entry);
-
     List<FullEntryDto> findAll();
 
     Optional<FullEntryDto> findById(long id);

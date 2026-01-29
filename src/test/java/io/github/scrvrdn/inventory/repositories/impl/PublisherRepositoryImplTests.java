@@ -34,6 +34,9 @@ public class PublisherRepositoryImplTests {
     @Mock
     private JdbcTemplate jdbcTemplate;
 
+    @Mock
+    private PublisherRowMapper publisherRowMapper;
+
     @InjectMocks
     private PublisherRepositoryImpl underTest;
 
@@ -80,9 +83,9 @@ public class PublisherRepositoryImplTests {
                 """;
 
         verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PublisherRowMapper.class),
-            eq(id)
+            expectedSql,
+            publisherRowMapper,
+            id
         );
     }
 
@@ -95,8 +98,8 @@ public class PublisherRepositoryImplTests {
                 """;
 
         verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PublisherRowMapper.class)
+            expectedSql,
+            publisherRowMapper
         );
     }
 

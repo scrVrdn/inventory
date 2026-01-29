@@ -21,9 +21,13 @@ import io.github.scrvrdn.inventory.repositories.BookPersonRepository;
 public class BookPersonRepositoryImpl implements BookPersonRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final PersonRowMapper personRowMapper;
+    private final PersonByBookIdRowMapper personByBookIdRowMapper;
 
-    public BookPersonRepositoryImpl (final JdbcTemplate jdbcTemplate) {
+    public BookPersonRepositoryImpl (final JdbcTemplate jdbcTemplate, final PersonRowMapper personRowMapper, final PersonByBookIdRowMapper personByBookIdRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
+        this.personRowMapper = personRowMapper;
+        this.personByBookIdRowMapper = personByBookIdRowMapper;
     }
 
     @Override
@@ -50,7 +54,7 @@ public class BookPersonRepositoryImpl implements BookPersonRepository {
                 ORDER BY "order_index";
                 """;
 
-        return jdbcTemplate.query(query, new PersonRowMapper(), bookId);
+        return jdbcTemplate.query(query, personRowMapper, bookId);
     }
 
     @Override
@@ -73,7 +77,7 @@ public class BookPersonRepositoryImpl implements BookPersonRepository {
                 ORDER BY "order_index";
                 """;
 
-        List<Entry<Long, Person>> result = jdbcTemplate.query(query, new PersonByBookIdRowMapper());
+        List<Entry<Long, Person>> result = jdbcTemplate.query(query, personByBookIdRowMapper);
 
         return groupEntries(result.stream());
     }
@@ -120,7 +124,7 @@ public class BookPersonRepositoryImpl implements BookPersonRepository {
                 ORDER BY "order_index";
                 """;
         
-        return jdbcTemplate.query(query, new PersonRowMapper(), bookId);
+        return jdbcTemplate.query(query, personRowMapper, bookId);
     }
 
     @Override
@@ -144,7 +148,7 @@ public class BookPersonRepositoryImpl implements BookPersonRepository {
                 ORDER BY "order_index";
                 """;
 
-        List<Entry<Long, Person>> result = jdbcTemplate.query(query, new PersonByBookIdRowMapper());
+        List<Entry<Long, Person>> result = jdbcTemplate.query(query, personByBookIdRowMapper);
         return groupEntries(result.stream());
     }
 
@@ -195,8 +199,5 @@ public class BookPersonRepositoryImpl implements BookPersonRepository {
             return ids.size();
         }
     }
-
-
-
 
 }

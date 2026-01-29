@@ -3,7 +3,6 @@ package io.github.scrvrdn.inventory.services.impl;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.BookUpdateRequest;
@@ -25,12 +24,12 @@ public class BookServiceImpl implements BookService {
         this.bookPublisherRepository = bookPublisherRepository;
     }
 
-    @Transactional
+    @Override
     public void create(Book book) {
         bookRepository.create(book);
     }
 
-    @Transactional
+    @Override
     public void update(long bookId, BookUpdateRequest request) {
         Book book = bookRepository.findById(bookId).orElseThrow();
         

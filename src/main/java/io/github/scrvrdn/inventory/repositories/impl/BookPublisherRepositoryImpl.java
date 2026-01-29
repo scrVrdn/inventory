@@ -16,10 +16,15 @@ import io.github.scrvrdn.inventory.repositories.BookPublisherRepository;
 
 @Repository
 public class BookPublisherRepositoryImpl implements BookPublisherRepository {
+    
     private final JdbcTemplate jdbcTemplate;
+    private final PublisherRowMapper publisherRowMapper;
+    private final PublisherByBookIdMapper publisherByBookIdMapper;
 
-    public BookPublisherRepositoryImpl(final JdbcTemplate jdbcTemplate) {
+    public BookPublisherRepositoryImpl(final JdbcTemplate jdbcTemplate, final PublisherRowMapper publisherRowMapper, final PublisherByBookIdMapper publisherByBookIdMapper) {
         this.jdbcTemplate = jdbcTemplate;
+        this.publisherRowMapper = publisherRowMapper;
+        this.publisherByBookIdMapper = publisherByBookIdMapper;
     }
 
      @Override
@@ -58,7 +63,7 @@ public class BookPublisherRepositoryImpl implements BookPublisherRepository {
                 JOIN "published" ON "publishers"."id" = "published"."publisher_id"
                 WHERE "published"."book_id" = ?;
                 """;
-        List<Publisher> result = jdbcTemplate.query(query, new PublisherRowMapper(), bookId);
+        List<Publisher> result = jdbcTemplate.query(query, publisherRowMapper, bookId);
         return result.stream().findFirst();
     }
 
@@ -70,7 +75,7 @@ public class BookPublisherRepositoryImpl implements BookPublisherRepository {
                 JOIN "published" ON "publishers"."id" = "published"."publisher_id";
                 """;
 
-        List<Entry<Long, Publisher>> result = jdbcTemplate.query(query, new PublisherByBookIdMapper());
+        List<Entry<Long, Publisher>> result = jdbcTemplate.query(query, publisherByBookIdMapper);
         return result.stream().collect(Collectors.toMap(Entry::getKey, Entry::getValue));
     }
 }

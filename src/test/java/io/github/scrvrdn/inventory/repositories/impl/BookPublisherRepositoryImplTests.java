@@ -20,6 +20,12 @@ public class BookPublisherRepositoryImplTests {
     @Mock
     private JdbcTemplate jdbcTemplate;
 
+    @Mock
+    private PublisherRowMapper publisherRowMapper;
+
+    @Mock
+    private PublisherByBookIdMapper publisherByBookIdMapper;
+
     @InjectMocks
     private BookPublisherRepositoryImpl underTest;
 
@@ -55,11 +61,7 @@ public class BookPublisherRepositoryImplTests {
                 """;
         underTest.findPublisherByBookId(bookId);
 
-        verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PublisherRowMapper.class),
-            eq(bookId)
-        );
+        verify(jdbcTemplate).query(expectedSql, publisherRowMapper, bookId);
     }
 
     @Test
@@ -90,9 +92,6 @@ public class BookPublisherRepositoryImplTests {
                 JOIN "published" ON "publishers"."id" = "published"."publisher_id";
                 """;
 
-        verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PublisherByBookIdMapper.class)
-        );
+        verify(jdbcTemplate).query(expectedSql, publisherByBookIdMapper);
     }
 }

@@ -20,9 +20,11 @@ import io.github.scrvrdn.inventory.repositories.PersonRepository;
 public class PersonRepositoryImpl implements PersonRepository {
 
     private final JdbcTemplate jdbcTemplate;
+    private final PersonRowMapper personRowMapper;
 
-    public PersonRepositoryImpl(final JdbcTemplate jdbcTemplate) {
+    public PersonRepositoryImpl(final JdbcTemplate jdbcTemplate, final PersonRowMapper personRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
+        this.personRowMapper = personRowMapper;
     }
 
     @Override
@@ -80,7 +82,7 @@ public class PersonRepositoryImpl implements PersonRepository {
         String query = """
                 SELECT * FROM "persons" WHERE "id" = ?;
                 """;
-        List<Person> result = jdbcTemplate.query(query, new PersonRowMapper(), id);
+        List<Person> result = jdbcTemplate.query(query, personRowMapper, id);
         return result.stream().findFirst();
     }
 
@@ -91,7 +93,7 @@ public class PersonRepositoryImpl implements PersonRepository {
                 """;
         return jdbcTemplate.query(
                 query,
-                new PersonRowMapper()
+                personRowMapper
             );
     }
 

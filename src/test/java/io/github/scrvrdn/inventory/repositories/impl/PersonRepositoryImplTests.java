@@ -35,6 +35,9 @@ public class PersonRepositoryImplTests {
     @Mock
     private JdbcTemplate jdbcTemplate;
 
+    @Mock
+    private PersonRowMapper personRowMapper;
+
     @InjectMocks
     private PersonRepositoryImpl underTest;
 
@@ -81,9 +84,9 @@ public class PersonRepositoryImplTests {
                 """;
 
         verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PersonRowMapper.class),
-            eq(id)
+            expectedSql,
+            personRowMapper,
+            id
         );
     }
 
@@ -96,8 +99,9 @@ public class PersonRepositoryImplTests {
                 """;
 
         verify(jdbcTemplate).query(
-                eq(expectedSql),
-                any(PersonRowMapper.class));
+                expectedSql,
+                personRowMapper
+            );
     }
 
     @Test

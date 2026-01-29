@@ -14,16 +14,7 @@ public class FlatEntryDtoRowMapper implements RowMapper<FlatEntryDto> {
     public FlatEntryDto mapRow(ResultSet rs, int rowNum) throws SQLException {
         int yearInt = rs.getInt("year");
         Integer year = rs.wasNull() ? null : yearInt;
-
-        // return FlatEntryDto.builder()
-        //     .bookId(rs.getLong("id"))
-        //     .bookTitle(rs.getString("title"))
-        //     .bookYear(year)
-        //     .shelfMark(rs.getString("shelf_mark"))
-        //     .authors(rs.getString("authors"))
-        //     .editors(rs.getString("editors"))
-        //     .publisher(rs.getString("publisher"))
-        //     .build();
+        
         return new FlatEntryDto(
                 rs.getLong("id"),
                 rs.getString("title"),

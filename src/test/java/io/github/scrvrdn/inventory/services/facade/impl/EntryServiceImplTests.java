@@ -50,11 +50,7 @@ public class EntryServiceImplTests {
         when(mockBook.getId()).thenReturn(1L);        
         doReturn(mockBook).when(underTest).createEmptyBook();
 
-        // FlatEntryDto expected = FlatEntryDto.builder()
-        //                                     .bookId(1L)
-        //                                     .build();
         FlatEntryDto expected = new FlatEntryDto(1L, null, null, null, null, null, null);
-
 
         Optional<FlatEntryDto> result = underTest.createEmptyEntry();        
 
@@ -83,7 +79,7 @@ public class EntryServiceImplTests {
                 ORDER BY "book_person"."role", "book_person"."order_index";
                 """;
 
-                verify(jdbcTemplate).query(eq(expectedSql), any(EntryDtoExtractor.class), eq(bookId));
+                verify(jdbcTemplate).query(expectedSql, entryDtoExtractor, bookId);
     }
 
     @Test
@@ -114,7 +110,7 @@ public class EntryServiceImplTests {
                 GROUP BY b."id";
                 """;
            
-                verify(jdbcTemplate).query(eq(expectedSql), any(FlatEntryDtoRowMapper.class), eq(bookId));
+                verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper, bookId);
     }
 
     @Test
@@ -143,7 +139,7 @@ public class EntryServiceImplTests {
                 GROUP BY b."id";
                 """;
 
-        verify(jdbcTemplate).query(eq(expectedSql), any(FlatEntryDtoRowMapper.class));
+        verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper);
     }
 
     @Test

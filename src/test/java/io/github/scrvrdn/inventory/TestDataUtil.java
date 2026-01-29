@@ -135,21 +135,5 @@ public final class TestDataUtil {
                             .collect(Collectors.joining("; ")),
                         entry.getPublisher().toString()
                     );
-
-
-
-        // return FlatEntryDto.builder()
-        //             .bookId(entry.getBook().getId())
-        //             .bookTitle(entry.getBook().getTitle())
-        //             .bookYear(entry.getBook().getYear())
-        //             .shelfMark(entry.getBook().getShelfMark())
-        //             .authors(entry.getAuthors().stream()
-        //                     .map(a -> a.getLastName() + ", " + a.getFirstNames())
-        //                     .collect(Collectors.joining("; ")))
-        //             .editors(entry.getEditors().stream()
-        //                     .map(e -> e.getLastName() + ", " + e.getFirstNames())
-        //                     .collect(Collectors.joining("; ")))
-        //             .publisher(entry.getPublisher().getLocation() + ": " + entry.getPublisher().getName())
-        //             .build();
     }
 }

@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Person;
@@ -20,8 +21,6 @@ import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import io.github.scrvrdn.inventory.repositories.BookPersonRepository;
 import io.github.scrvrdn.inventory.repositories.BookPublisherRepository;
 import io.github.scrvrdn.inventory.repositories.BookRepository;
-import io.github.scrvrdn.inventory.repositories.PersonRepository;
-import io.github.scrvrdn.inventory.repositories.PublisherRepository;
 import io.github.scrvrdn.inventory.services.BookService;
 import io.github.scrvrdn.inventory.services.PersonService;
 import io.github.scrvrdn.inventory.services.PublisherService;
@@ -31,23 +30,21 @@ import io.github.scrvrdn.inventory.services.facade.EntryService;
 public class EntryServiceImpl implements EntryService {
 
     private final JdbcTemplate jdbcTemplate;
+    
     private final BookRepository bookRepository;
-    private final PersonRepository personRepository;
-    private final PublisherRepository publisherRepository;
     private final BookPersonRepository bookPersonRepository;
     private final BookPublisherRepository bookPublisherRepository;
 
     private final BookService bookService;
     private final PersonService personService;
     private final PublisherService publisherService;
+
     private final EntryDtoExtractor entryDtoExtractor;
     private final FlatEntryDtoRowMapper flatEntryDtoRowMapper;
 
     public EntryServiceImpl(
         final JdbcTemplate jdbcTemplate,
         final BookRepository bookRepository,
-        final PersonRepository personRepository,
-        final PublisherRepository publisherRepository,
         final BookPersonRepository bookPersonRepository,
         final BookPublisherRepository bookPublisherRepository,
         final BookService bookService,
@@ -58,8 +55,6 @@ public class EntryServiceImpl implements EntryService {
     ) {
         this.jdbcTemplate = jdbcTemplate;
         this.bookRepository = bookRepository;
-        this.personRepository = personRepository;
-        this.publisherRepository = publisherRepository;
         this.bookPersonRepository = bookPersonRepository;
         this.bookPublisherRepository = bookPublisherRepository;
 
@@ -70,6 +65,7 @@ public class EntryServiceImpl implements EntryService {
         this.flatEntryDtoRowMapper = flatEntryDtoRowMapper;
     }
 
+    @Transactional
     @Override
     public Optional<FlatEntryDto> createEmptyEntry() {
         Book emptyBook = createEmptyBook();
@@ -80,35 +76,7 @@ public class EntryServiceImpl implements EntryService {
     protected Book createEmptyBook() {
         return Book.builder().build();
     }
-    
-    @Override
-    public void create(FullEntryDto entryDto) {
-        createEntities(entryDto);
-        createRelations(entryDto);        
-    }
 
-    private void createEntities(FullEntryDto entryDto) {
-        bookService.create(entryDto.getBook());
-        personRepository.createAll(entryDto.getAuthors());
-        personRepository.createAll(entryDto.getEditors());
-        publisherRepository.create(entryDto.getPublisher());
-    }
-
-    private void createRelations(FullEntryDto entryDto) {
-        long bookId = entryDto.getBook().getId();
-
-        List<Long> authorIds = entryDto.getAuthors().stream()
-                                                        .map(Person::getId)
-                                                        .collect(Collectors.toList());
-
-        List<Long> editorIds = entryDto.getEditors().stream()
-                                                        .map(Person::getId)
-                                                        .collect(Collectors.toList());
-
-        bookPersonRepository.assignAuthorsToBook(bookId, authorIds);
-        bookPersonRepository.assignEditorsToBook(bookId, editorIds);
-        bookPublisherRepository.assignPublisherToBook(entryDto.getBook().getId(), entryDto.getPublisher().getId());
-    }
 
     @Override
     public Optional<FullEntryDto> findById(long id) {
@@ -205,6 +173,7 @@ public class EntryServiceImpl implements EntryService {
         return jdbcTemplate.query(query, flatEntryDtoRowMapper);
     }
 
+    @Transactional
     @Override
     public FlatEntryDto update(FullEntryDto entry) {
         convertEmptyStringsToNull(entry);
@@ -276,6 +245,7 @@ public class EntryServiceImpl implements EntryService {
         );
     }
 
+    @Transactional
     @Override
     public void delete(long id) {
         bookService.delete(id);

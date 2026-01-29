@@ -25,6 +25,12 @@ public class BookPersonRepositoryImplTests {
     @Mock
     private JdbcTemplate jdbcTemplate;
 
+    @Mock
+    private PersonRowMapper personRowMapper;
+
+    @Mock
+    private PersonByBookIdRowMapper personByBookIdRowMapper;
+
     @InjectMocks
     private BookPersonRepositoryImpl underTest;
 
@@ -62,10 +68,7 @@ public class BookPersonRepositoryImplTests {
 
         underTest.findAuthorsByBookId(bookId);
 
-        verify(jdbcTemplate).query(
-                    eq(expectedSql),
-                    any(PersonRowMapper.class),
-                    eq(bookId));
+        verify(jdbcTemplate).query(expectedSql, personRowMapper, bookId);
     }
 
     @Test
@@ -95,10 +98,7 @@ public class BookPersonRepositoryImplTests {
                 ORDER BY "order_index";
                 """;
 
-        verify(jdbcTemplate).query(
-            eq(expectedSql),
-            any(PersonByBookIdRowMapper.class)
-        );
+        verify(jdbcTemplate).query(expectedSql, personByBookIdRowMapper);
     }
 
     @Test
@@ -153,7 +153,7 @@ public class BookPersonRepositoryImplTests {
 
         underTest.findEditorsByBookId(bookId);
 
-        verify(jdbcTemplate).query(eq(expectedSql), any(PersonRowMapper.class), eq(bookId));
+        verify(jdbcTemplate).query(expectedSql, personRowMapper, bookId);
     }
 
     @Test
@@ -180,7 +180,7 @@ public class BookPersonRepositoryImplTests {
                 ORDER BY "order_index";
                 """;
         underTest.findAllEditorsGroupedByBookId();
-        verify(jdbcTemplate).query(eq(expectedSql), any(PersonByBookIdRowMapper.class));
+        verify(jdbcTemplate).query(expectedSql, personByBookIdRowMapper);
     }
 
     @Test

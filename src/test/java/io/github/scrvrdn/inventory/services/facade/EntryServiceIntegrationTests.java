@@ -38,11 +38,14 @@ public class EntryServiceIntegrationTests {
 
     @Test
     public void testThatFullEntryDtoCanBeCreatedAndRetrieved() {
+        FlatEntryDto emptyEntry = underTest.createEmptyEntry().orElseThrow();
         FullEntryDto entry = TestDataUtil.createTestEntry();
+        entry.getBook().setId(emptyEntry.bookId());
+
         entry.getAuthors().add(TestDataUtil.createTestPerson3());
         entry.getAuthors().add(TestDataUtil.createTestPerson4());
         entry.getEditors().add(TestDataUtil.createTestPerson4());
-        underTest.create(entry);
+        underTest.update(entry);
         
         Optional<FullEntryDto> result = underTest.findById(entry.getBook().getId());
         assertThat(result).isPresent();
@@ -64,15 +67,21 @@ public class EntryServiceIntegrationTests {
 
     @Test
     public void testThatFindsAllFullEntryDtos() {
-
+        FlatEntryDto emptyEntry1 = underTest.createEmptyEntry().orElseThrow();        
         FullEntryDto entry1 = TestDataUtil.createTestEntry();
+        entry1.getBook().setId(emptyEntry1.bookId());
+
+        FlatEntryDto emptyEntry2 = underTest.createEmptyEntry().orElseThrow();
         FullEntryDto entry2 = TestDataUtil.createTestEntry2();
+        entry2.getBook().setId(emptyEntry2.bookId());
+
         entry1.getAuthors().add(TestDataUtil.createTestPerson3());
         entry2.getAuthors().add(TestDataUtil.createTestPerson());
         entry1.getAuthors().add(TestDataUtil.createTestPerson2());
         entry1.getAuthors().add(TestDataUtil.createTestPerson4());
-        underTest.create(entry1);
-        underTest.create(entry2);
+
+        underTest.update(entry1);
+        underTest.update(entry2);
 
         List<FullEntryDto> result = underTest.findAll();
         assertThat(result)
@@ -82,10 +91,14 @@ public class EntryServiceIntegrationTests {
 
     @Test
     public void testThatGetsFlatEntryDtos() {
+        FlatEntryDto emptyEntry = underTest.createEmptyEntry().orElseThrow();        
         FullEntryDto entry = TestDataUtil.createTestEntry();
+        entry.getBook().setId(emptyEntry.bookId());
+
         entry.getAuthors().add(TestDataUtil.createTestPerson3());
         entry.getEditors().add(TestDataUtil.createTestPerson4());
-        underTest.create(entry);
+
+        underTest.update(entry);
         FlatEntryDto entryRow = TestDataUtil.createEntryRowFromEntry(entry);
 
         Optional<FlatEntryDto> result = underTest.getFlatEntryDto(entry.getBook().getId());
@@ -105,24 +118,33 @@ public class EntryServiceIntegrationTests {
 
     @Test
     public void testThatGetsAllFLatEntryDtos() {
+        FlatEntryDto emptyEntry1 = underTest.createEmptyEntry().orElseThrow();
         FullEntryDto entry1 = TestDataUtil.createTestEntry();
+        entry1.getBook().setId(emptyEntry1.bookId());
+
+        FlatEntryDto emptyEntry2 = underTest.createEmptyEntry().orElseThrow();        
         FullEntryDto entry2 = TestDataUtil.createTestEntry2();
+        entry2.getBook().setId(emptyEntry2.bookId());
+
         entry1.getAuthors().add(TestDataUtil.createTestPerson3());
-        underTest.create(entry1);
-        underTest.create(entry2);
-        FlatEntryDto entryRow1 = TestDataUtil.createEntryRowFromEntry(entry1);
-        FlatEntryDto entryRow2 = TestDataUtil.createEntryRowFromEntry(entry2);
+        underTest.update(entry1);
+        underTest.update(entry2);
+
+        FlatEntryDto expectedEntryRow1 = TestDataUtil.createEntryRowFromEntry(entry1);
+        FlatEntryDto expectedEntryRow2 = TestDataUtil.createEntryRowFromEntry(entry2);
         
         List<FlatEntryDto> result = underTest.getAllFlatEntryDtos();
         assertThat(result)
             .hasSize(2)
-            .containsExactly(entryRow1, entryRow2);
+            .containsExactly(expectedEntryRow1, expectedEntryRow2);
     }
 
     @Test
     public void testThatCanUpdateEntry() {
+        FlatEntryDto emptyEntry = underTest.createEmptyEntry().orElseThrow();
         FullEntryDto entry = TestDataUtil.createTestEntry();
-        underTest.create(entry);
+        entry.getBook().setId(emptyEntry.bookId());
+        underTest.update(entry);
 
         entry.getAuthors().add(TestDataUtil.createTestPerson2());
         
@@ -137,8 +159,10 @@ public class EntryServiceIntegrationTests {
 
     @Test
     public void testThatEntryCanBeDeleted() {
+        FlatEntryDto emptyEntry = underTest.createEmptyEntry().orElseThrow();
         FullEntryDto entry = TestDataUtil.createTestEntry();
-        underTest.create(entry);
+        entry.getBook().setId(emptyEntry.bookId());
+        underTest.update(entry);
 
         underTest.delete(entry.getBook().getId());
         Optional<FullEntryDto> result = underTest.findById(entry.getBook().getId());
