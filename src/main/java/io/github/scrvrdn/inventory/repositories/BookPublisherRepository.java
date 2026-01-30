@@ -13,6 +13,8 @@ public interface BookPublisherRepository {
 
     Optional<Publisher> findPublisherByBookId(long bookId);
 
+    Long findPublisherIdByBookId(long bookId);
+
     Map<Long, Publisher> findPublishersGroupedByBookId();
 
 }

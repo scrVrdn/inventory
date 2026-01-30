@@ -44,7 +44,7 @@ public class BookPublisherRepositoryImplTests {
         verify(jdbcTemplate).update(expectedSql, bookId, publisherId);
     }
 
-     @Test
+    @Test
     public void testThatFindPublisherGeneratesCorrectSql() {
         long bookId = 1L;       
 
@@ -56,6 +56,19 @@ public class BookPublisherRepositoryImplTests {
         underTest.findPublisherByBookId(bookId);
 
         verify(jdbcTemplate).query(expectedSql, publisherRowMapper, bookId);
+    }
+
+    @Test
+    public void testThatFindPublisherIdGeneratesCorrectSql() {
+        long bookId = 1L;
+
+        String expectedSql = """
+                SELECT "publisher_id" FROM "published"
+                WHERE "book_id" = ?;
+                """;
+        underTest.findPublisherIdByBookId(bookId);
+
+        verify(jdbcTemplate).queryForList(expectedSql, Long.class, bookId);
     }
 
     @Test

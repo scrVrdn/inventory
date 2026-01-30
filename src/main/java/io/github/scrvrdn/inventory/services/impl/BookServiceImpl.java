@@ -31,27 +31,26 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public void update(long bookId, BookUpdateRequest request) {
+        updateBookFields(bookId, request);
+        updateAuthors(bookId, request);
+        updateEditors(bookId, request);
+        updatePublisher(bookId, request);
+    }
+
+    private void updateBookFields(long bookId, BookUpdateRequest request) {
         Book book = bookRepository.findById(bookId).orElseThrow();
-        
         book.setTitle(request.title());
         book.setYear(request.year());
         book.setIsbn10(request.isbn10());
         book.setIsbn13(request.isbn13());
         book.setShelfMark(request.shelfMark());
-
         bookRepository.update(book);
-
-        updateAuthors(bookId, request.authorIds());
-        updateEditors(bookId, request.editorIds());
-
-        if (request.publisherId() != null) bookPublisherRepository.assignPublisherToBook(bookId, request.publisherId());   
     }
 
-    private void updateAuthors(long bookId, List<Long> requestedAuthors) {
-        List<Long> authorsToRemove = detectRemovedAuthors(bookId, requestedAuthors);
+    private void updateAuthors(long bookId, BookUpdateRequest request) {
+        List<Long> authorsToRemove = detectRemovedAuthors(bookId, request.authorIds());
         if (!authorsToRemove.isEmpty()) bookPersonRepository.removeAuthorsFromBook(bookId, authorsToRemove);
-
-        if (!requestedAuthors.isEmpty()) bookPersonRepository.assignAuthorsToBook(bookId, requestedAuthors);
+        if (!request.authorIds().isEmpty()) bookPersonRepository.assignAuthorsToBook(bookId, request.authorIds());
     }
 
     private List<Long> detectRemovedAuthors(long bookId, List<Long> requestedAuthors) {
@@ -59,16 +58,21 @@ public class BookServiceImpl implements BookService {
         return currentAuthorIds.stream().filter(id -> !requestedAuthors.contains(id)).toList();
     }
 
-    private void updateEditors(long bookId, List<Long> requestedEditors) {
-        List<Long> editorsToRemove = detectRemovedEditors(bookId, requestedEditors);
+    private void updateEditors(long bookId, BookUpdateRequest request) {
+        List<Long> editorsToRemove = detectRemovedEditors(bookId, request.editorIds());
         if (!editorsToRemove.isEmpty()) bookPersonRepository.removeEditorsFromBook(bookId, editorsToRemove);
-
-        if (!requestedEditors.isEmpty()) bookPersonRepository.assignEditorsToBook(bookId, requestedEditors);
+        if (!request.editorIds().isEmpty()) bookPersonRepository.assignEditorsToBook(bookId, request.editorIds());
     }
 
-    private List<Long> detectRemovedEditors(long bookid, List<Long> requestedEditors) {
-        List<Long> currentEditorIds = bookPersonRepository.findEditorIdsByBookId(bookid);
+    private List<Long> detectRemovedEditors(long bookId, List<Long> requestedEditors) {
+        List<Long> currentEditorIds = bookPersonRepository.findEditorIdsByBookId(bookId);
         return currentEditorIds.stream().filter(id -> !requestedEditors.contains(id)).toList();
+    }
+
+    private void updatePublisher(long bookId, BookUpdateRequest request) {
+        Long currentPublisherId = bookPublisherRepository.findPublisherIdByBookId(bookId);
+        if (request.publisherId() == null && currentPublisherId != null) bookPublisherRepository.removePublisherFromBook(bookId, currentPublisherId);
+        if (request.publisherId() != null && request.publisherId() != currentPublisherId) bookPublisherRepository.assignPublisherToBook(bookId, request.publisherId());
     }
 
     @Override

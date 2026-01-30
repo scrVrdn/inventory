@@ -110,7 +110,6 @@ public class EntryServiceIntegrationTests {
     public void testThatGetsEmptyFlatEntryDto() {
         FlatEntryDto dto = underTest.createEmptyEntry().orElseThrow();
 
-        //Optional<FlatEntryDto> result = underTest.getFlatEntryDto(dto.getBookId());
         Optional<FlatEntryDto> result = underTest.getFlatEntryDto(dto.bookId());
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(dto);

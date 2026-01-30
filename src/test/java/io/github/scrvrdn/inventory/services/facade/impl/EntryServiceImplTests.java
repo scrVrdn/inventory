@@ -1,6 +1,5 @@
 package io.github.scrvrdn.inventory.services.facade.impl;
 
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,7 +45,7 @@ public class EntryServiceImplTests {
     public void testThatCreateEmptyEntryCallsBookRepository() {
         Book mockBook = mock(Book.class);
         when(mockBook.getId()).thenReturn(1L);        
-        doReturn(mockBook).when(underTest).createEmptyBook();
+        when(underTest.createEmptyBook()).thenReturn(mockBook);
 
         FlatEntryDto expected = new FlatEntryDto(1L, null, null, null, null, null, null);
 

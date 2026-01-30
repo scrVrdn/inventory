@@ -67,6 +67,17 @@ public class BookPublisherRepositoryImpl implements BookPublisherRepository {
         return result.stream().findFirst();
     }
 
+    @Override
+    public Long findPublisherIdByBookId(long bookId) {
+        String query = """
+                SELECT "publisher_id" FROM "published"
+                WHERE "book_id" = ?;
+                """;
+
+        List<Long> result = jdbcTemplate.queryForList(query, Long.class, bookId);
+        return result.isEmpty() ? null: result.getFirst();
+    }
+
 
     @Override
     public Map<Long, Publisher> findPublishersGroupedByBookId() {

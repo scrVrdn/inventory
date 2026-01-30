@@ -58,6 +58,19 @@ public class BookPublisherRepositoryIntegerationTests {
     }
 
     @Test
+    public void testThatPublisherIdCanBeRetrieved() {
+        Book book = TestDataUtil.createTestBook();
+        Publisher publisher = TestDataUtil.createTestPublisher();
+        bookRepository.create(book);
+        publisherRepository.create(publisher);
+
+        underTest.assignPublisherToBook(book.getId(), publisher.getId());
+
+        Long result = underTest.findPublisherIdByBookId(book.getId());
+        assertThat(result).isEqualTo(publisher.getId());
+    }
+
+    @Test
     public void testThatPublishersGroupedByBookIdCanBeRetrieved() {
         Publisher publisher1 = TestDataUtil.createTestPublisher();
         publisherRepository.create(publisher1);
