@@ -16,5 +16,7 @@ public interface BookRepository {
     void update(Book book);
     
     void delete(long id);
+
+    int numberOfRows();
     
 }

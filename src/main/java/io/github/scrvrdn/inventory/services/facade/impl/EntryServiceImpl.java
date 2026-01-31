@@ -147,6 +147,36 @@ public class EntryServiceImpl implements EntryService {
     }
 
     @Override
+    public List<FlatEntryDto> getFlatEntryDtos(long fromRow, int numberOfEntries) {
+        String query = """
+                SELECT
+                    b."id", b."title", b."year", b."shelf_mark",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "authors",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "editors",
+                    CASE
+                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                        THEN NULL
+                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                    END AS "publisher"
+                FROM "books" b
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+                LEFT JOIN "published" ON b."id" = "published"."book_id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                GROUP BY b."id"
+                HAVING b."id" > ?
+                LIMIT ?;
+                """;
+
+        return jdbcTemplate.query(query, flatEntryDtoRowMapper, fromRow, numberOfEntries);
+
+    }
+
+    @Override
     public List<FlatEntryDto> getAllFlatEntryDtos() {
         String query = """
                 SELECT
@@ -249,5 +279,9 @@ public class EntryServiceImpl implements EntryService {
     @Override
     public void delete(long id) {
         bookService.delete(id);
+    }
+
+    public int numberOfRows() {
+        return bookService.numberOfRows();
     }
 }

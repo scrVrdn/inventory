@@ -196,7 +196,7 @@ public class BookRepositoryIntegrationTest {
 
     @Test
     public void testThatBookDeletionDoesNotDeletePublisher() {
-         Book book = TestDataUtil.createTestBook();
+        Book book = TestDataUtil.createTestBook();
         underTest.create(book);
 
         Publisher publisher = TestDataUtil.createTestPublisher();
@@ -211,4 +211,22 @@ public class BookRepositoryIntegrationTest {
         assertThat(result.get()).isEqualTo(publisher);
     }
 
+    @Test
+    public void testThatNumberOfRowsReturnsCorrectNumber() {
+        Book book = TestDataUtil.createTestBook();
+        Book book2 = TestDataUtil.createTestBook2();
+        Book book3 = TestDataUtil.createTestBook3();
+
+        underTest.create(book);
+        underTest.create(book2);
+        underTest.create(book3);
+        
+        int resultAfterInsert = underTest.numberOfRows();
+        assertThat(resultAfterInsert).isEqualTo(3);
+        
+        underTest.delete(book.getId());
+        
+        int resultAfterDelete = underTest.numberOfRows();
+        assertThat(resultAfterDelete).isEqualTo(2);
+    }
 }

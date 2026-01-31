@@ -111,6 +111,38 @@ public class EntryServiceImplTests {
     }
 
     @Test
+    public void testThatGetNFlatEntryDtosGeneratesCorrectSql() {
+        String expectedSql = """
+                SELECT
+                    b."id", b."title", b."year", b."shelf_mark",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "authors",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "editors",
+                    CASE
+                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                        THEN NULL
+                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                    END AS "publisher"
+                FROM "books" b
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+                LEFT JOIN "published" ON b."id" = "published"."book_id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                GROUP BY b."id"
+                HAVING b."id" > ?
+                LIMIT ?;
+                """;
+        
+        int numberOfEntries = 3;
+        long fromRow = 4;
+        underTest.getFlatEntryDtos(fromRow, numberOfEntries);
+        verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper, fromRow, numberOfEntries);
+    }
+
+    @Test
     public void testThatGetAllFlatEntryDtoGeneratesCorrectSql() {
         underTest.getAllFlatEntryDtos();
 
@@ -144,6 +176,12 @@ public class EntryServiceImplTests {
         long bookId = 1L;
         underTest.delete(bookId);
         verify(bookService).delete(bookId);
+    }
+
+    @Test
+    public void testThatNumberOfRowsCallsBookService() {
+        underTest.numberOfRows();
+        verify(bookService).numberOfRows();
     }
 
 }

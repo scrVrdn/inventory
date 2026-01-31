@@ -118,4 +118,12 @@ public class BookRepositoryImpl implements BookRepository {
                 """;
         jdbcTemplate.update(query, id);
     }
+
+    @Override
+    public int numberOfRows() {
+        String query = """
+                SELECT "total_rows" FROM "row_counters" WHERE "table_name" = 'books';
+                """;
+        return jdbcTemplate.queryForObject(query, int.class);
+    }
 }

@@ -95,4 +95,10 @@ public class BookServiceImplTests {
         
         verify(bookRepository).delete(bookId);
     }
+
+    @Test
+    public void testThatNumberOfRowsCallsBookRepository() {
+        underTest.numberOfRows();
+        verify(bookRepository).numberOfRows();
+    }
 }

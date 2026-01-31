@@ -18,9 +18,13 @@ public interface EntryService {
 
     Optional<FlatEntryDto> getFlatEntryDto(long bookId);
 
+    List<FlatEntryDto> getFlatEntryDtos(long fromRow, int numberOfEntries);
+
     List<FlatEntryDto> getAllFlatEntryDtos();
 
     FlatEntryDto update(FullEntryDto entry);
 
     void delete(long bookId);
+
+    int numberOfRows();
 }

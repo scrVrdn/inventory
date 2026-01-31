@@ -53,3 +53,30 @@ CREATE TABLE IF NOT EXISTS "published" (
     FOREIGN KEY("publisher_id") REFERENCES "publishers"("id") ON DELETE CASCADE,
     UNIQUE("book_id")
 );
+
+CREATE TABLE IF NOT EXISTS "row_counters"(
+    "table_name" TEXT,
+    "total_rows" INTEGER DEFAULT 0,
+    PRIMARY KEY("table_name")
+);
+
+INSERT OR IGNORE INTO "row_counters" ("table_name", "total_rows")
+VALUES ('books', 0);
+
+CREATE TRIGGER IF NOT EXISTS "books_insert_trigger"
+AFTER INSERT ON "books"
+FOR EACH ROW
+BEGIN
+    UPDATE "row_counters"
+    SET "total_rows" = "total_rows" + 1
+    WHERE "table_name" = 'books';
+END;
+
+CREATE TRIGGER IF NOT EXISTS "books_delete_trigger"
+AFTER DELETE ON "books"
+FOR EACH ROW
+BEGIN
+    UPDATE "row_counters"
+    SET "total_rows" = "total_rows" - 1
+    WHERE "table_name" = 'books';
+END;

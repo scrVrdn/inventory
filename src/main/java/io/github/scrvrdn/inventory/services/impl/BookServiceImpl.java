@@ -79,4 +79,9 @@ public class BookServiceImpl implements BookService {
     public void delete(long bookId) {
         bookRepository.delete(bookId);
     }
+
+    @Override
+    public int numberOfRows() {
+        return bookRepository.numberOfRows();
+    }
 }

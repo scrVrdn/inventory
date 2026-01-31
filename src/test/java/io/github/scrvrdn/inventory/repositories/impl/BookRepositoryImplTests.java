@@ -138,4 +138,17 @@ public class BookRepositoryImplTests {
         verify(jdbcTemplate).update(expectedSql, id);
     }
 
+    @Test
+    public void testThatNumberOfRowsGeneratesCorrectSql() {
+        
+        String expectedSql = """
+                SELECT "total_rows" FROM "row_counters" WHERE "table_name" = 'books';
+                """;
+
+        when(jdbcTemplate.queryForObject(expectedSql, int.class)).thenReturn(1);
+
+        underTest.numberOfRows();
+        verify(jdbcTemplate).queryForObject(expectedSql, int.class);
+    }
+
 }
