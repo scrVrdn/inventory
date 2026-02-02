@@ -17,6 +17,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
+import javafx.util.converter.IntegerStringConverter;
 
 
 @Controller
@@ -63,8 +65,9 @@ public class MainController {
     @FXML
     private void initialize() {
         createTable();
-        totalNumberOfRows = entryService.numberOfRows();
+        setupCurrentPageField();
         calculateTotalPageCount();
+        refreshTable();
         detailsPane.setSaveCallback(this::handleSave);
     }
 
@@ -78,7 +81,7 @@ public class MainController {
         shelfMark.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().shelfMark()));
 
         table.setItems(entryRows);
-        updateTableViewPage(currentPageIndex);
+        updateTableViewPage();
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 detailsPane.setVisibility(true);
@@ -91,58 +94,87 @@ public class MainController {
         });
     }
 
+    private void setupCurrentPageField() {
+        TextFormatter<Integer> formatter = new TextFormatter<>(
+            new IntegerStringConverter(),
+            1,
+            change -> {
+                String newText = change.getControlNewText();
+                if (newText.matches("\\d*")) {
+                    return change;
+                }
+
+                return null;
+            }
+        );
+
+        currentPage.setTextFormatter(formatter);
+    }
+
     private void refreshTable() {
-        totalNumberOfRows = entryService.numberOfRows();
-        
+        currentPage.setText(String.valueOf(currentPageIndex + 1));
+        validatePageButtons();
     }
 
     private void calculateTotalPageCount() {
-        int pages = (int) Math.ceil(totalNumberOfRows / (double) itemsPerPage);
-        totalPageCount = pages;
-        totalPageCountLabel.setText(String.valueOf(pages));
+        totalNumberOfRows = entryService.numberOfRows();
+        totalPageCount = (totalNumberOfRows + itemsPerPage - 1) / itemsPerPage;
+        totalPageCountLabel.setText("/ " + String.valueOf(totalPageCount));
     }
 
-    private void updateTableViewPage(int pageIndex) {
-        int fromIndex = pageIndex * itemsPerPage;
-        currentPage.setText(String.valueOf(pageIndex + 1));
+    private void updateTableViewPage() {
+        int fromRow = currentPageIndex * itemsPerPage;
+        currentPage.setText(String.valueOf(currentPageIndex + 1));
         validatePageButtons();
-        entryRows.setAll(entryService.getFlatEntryDtos(fromIndex, itemsPerPage));
+        entryRows.setAll(entryService.getFlatEntryDtos(itemsPerPage, fromRow));
     }
 
     @FXML
-    private void handlePreviousPage() {
+    private void goToPage() {
+        Integer requestedPage = (Integer) currentPage.getTextFormatter().getValue();
+        
+        if (requestedPage != null && requestedPage >= 1 && requestedPage <= totalPageCount) {
+            currentPageIndex = requestedPage - 1;
+            updateTableViewPage();
+        } else {
+            currentPage.setText(String.valueOf(currentPageIndex + 1));
+        }
+    }
+
+    @FXML
+    private void goToPreviousPage() {
         currentPageIndex = Math.max(currentPageIndex - 1, 0);
-        updateTableViewPage(currentPageIndex);
+        updateTableViewPage();
     }
 
     @FXML
     private void handleFastBack() {
         currentPageIndex = Math.max(currentPageIndex - skipPages, 0);
-        updateTableViewPage(currentPageIndex);
+        updateTableViewPage();
     }
 
     @FXML
-    private void handleFirstPage() {
+    private void goToFirstPage() {
         currentPageIndex = 0;
-        updateTableViewPage(currentPageIndex);
+        updateTableViewPage();
     }
 
     @FXML
-    private void handleNextPage() {
+    private void goToNextPage() {
         currentPageIndex = Math.min(currentPageIndex + 1, totalPageCount - 1);
-        updateTableViewPage(currentPageIndex);
+        updateTableViewPage();
     }
 
     @FXML
     private void handleFastForward() {
         currentPageIndex = Math.min(currentPageIndex + skipPages, totalPageCount - 1);
-        updateTableViewPage(currentPageIndex);
+        updateTableViewPage();
     }
 
     @FXML
-    private void handleLastPage() {
+    private void goToLastPage() {
         currentPageIndex = totalPageCount - 1;
-        updateTableViewPage(currentPageIndex);
+        updateTableViewPage();
     }
 
     private ObservableList<FlatEntryDto> getEntries() {
@@ -153,15 +185,43 @@ public class MainController {
 
     @FXML
     private void handleAddNewEntryButton() {
-        Optional<FlatEntryDto> entry = entryService.createEmptyEntry();
-        if (entry.isPresent()) {
+        boolean newEntryOnNewPage = lastPageIsFull();
+        boolean currentPageIsNotLastPage = !onLastPage();
+        
+        try {
+            Optional<FlatEntryDto> entry = entryService.createEmptyEntry();
+            if (entry.isPresent()) {
+                
+                calculateTotalPageCount();
             
-            table.getItems().add(entry.get());
-            table.getSelectionModel().selectLast();
-            table.scrollTo(table.getItems().size() - 1);
+                if (newEntryOnNewPage) {
+                    entryRows.clear();
+                    currentPageIndex = totalPageCount - 1;
+                    entryRows.add(entry.get());
+                } else {
+                    if (currentPageIsNotLastPage) {
+                        goToLastPage();
+                    } else {
+                        entryRows.add(entry.get());
+                    }
+                }
+                
+                table.getSelectionModel().selectLast();
+                table.scrollTo(table.getSelectionModel().getSelectedIndex());
+                refreshTable();
+            }
 
-            // refresh table
-        }        
+        } catch (Exception e) {
+            System.err.println("Failed to add Item");
+        }
+    }
+
+    private boolean lastPageIsFull() {
+        return totalNumberOfRows % itemsPerPage == 0;
+    }
+
+    private boolean onLastPage() {
+        return currentPageIndex == totalPageCount - 1;
     }
 
     private void validatePageButtons() {
@@ -192,13 +252,43 @@ public class MainController {
     @FXML
     private void handleDeleteEntryButton() {
         FlatEntryDto selected = table.getSelectionModel().getSelectedItem();
+        int selectedIdx = table.getSelectionModel().getSelectedIndex();
+
         if (selected != null) {
-            entryService.delete(selected.bookId());
-            table.getItems().remove(selected);
-            totalNumberOfRows = entryService.numberOfRows();
-            calculateTotalPageCount();
-            updateTableViewPage(currentPageIndex);
+            boolean toDeleteIsOnLastPage = onLastPage();
+            boolean toDeleteIsSingleItemOnPage = table.getItems().size() == 1;
+           
+            try {
+                entryService.delete(selected.bookId());
+                calculateTotalPageCount();
+
+                if (toDeleteIsOnLastPage && toDeleteIsSingleItemOnPage) {                    
+                    goToLastPage();
+
+                } else {
+                    entryRows.remove(selected);
+                    if (!toDeleteIsOnLastPage) fillTable();
+                }
+                
+                int targetIdx = selectedIdx < table.getItems().size() ? selectedIdx : Math.max(0, selectedIdx - 1);
+                if (!entryRows.isEmpty()) {
+                    table.getSelectionModel().select(targetIdx);
+                } else {
+                    table.getSelectionModel().clearSelection();
+                }
+
+            } catch (Exception e) {
+                System.err.println("Failed to delete: " + selected.toString());
+            }
+            
+            refreshTable();
         }
+    }
+
+    private void fillTable() {
+        FlatEntryDto lastEntry = entryRows.getLast();
+        Optional<FlatEntryDto> nextEntry = entryService.getNextFlatEntryDto(lastEntry.bookId());
+        if (nextEntry.isPresent()) entryRows.addLast(nextEntry.get());
     }
 
     @FXML
@@ -212,8 +302,5 @@ public class MainController {
         int idx = table.getSelectionModel().getSelectedIndex();
         table.getItems().set(idx, updatedEntry);
         table.getSelectionModel().select(idx);
-        totalNumberOfRows = entryService.numberOfRows();
-        calculateTotalPageCount();
-        updateTableViewPage(currentPageIndex);
     }
 }

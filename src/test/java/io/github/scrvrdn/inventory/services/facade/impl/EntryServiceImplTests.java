@@ -82,7 +82,7 @@ public class EntryServiceImplTests {
     @Test
     public void testThatGetFlatEntryDtoGeneratesCorrectSql() {
         long bookId = 1L;
-        underTest.getFlatEntryDto(bookId);
+        
 
         String expectedSql = """
                 SELECT
@@ -106,8 +106,42 @@ public class EntryServiceImplTests {
                 WHERE b."id" = ?
                 GROUP BY b."id";
                 """;
-           
-                verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper, bookId);
+            
+            underTest.getFlatEntryDto(bookId);
+            verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper, bookId);
+    }
+
+    @Test
+    public void testThatGetNextFlatEntryDtoGeneratesCorrectSql() {
+        long bookId = 1L;
+        
+        String expectedSql = """
+                SELECT
+                    b."id", b."title", b."year", b."shelf_mark",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "authors",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"    
+                    ) AS "editors",
+                    CASE
+                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                        THEN NULL
+                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                    END AS "publisher"
+                FROM "books" b
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+                LEFT JOIN "published" ON b."id" = "published"."book_id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                WHERE b."id" > ?
+                GROUP BY b."id"
+                ORDER BY b."id"
+                LIMIT 1;
+                """;
+
+            underTest.getNextFlatEntryDto(bookId);
+            verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper, bookId);
     }
 
     @Test
@@ -132,14 +166,15 @@ public class EntryServiceImplTests {
                 LEFT JOIN "published" ON b."id" = "published"."book_id"
                 LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
                 GROUP BY b."id"
-                HAVING b."id" > ?
-                LIMIT ?;
+                ORDER BY b."id"
+                LIMIT ?
+                OFFSET ?;
                 """;
         
         int numberOfEntries = 3;
-        long fromRow = 4;
-        underTest.getFlatEntryDtos(fromRow, numberOfEntries);
-        verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper, fromRow, numberOfEntries);
+        int fromRow = 4;
+        underTest.getFlatEntryDtos(numberOfEntries, fromRow);
+        verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper, numberOfEntries, fromRow);
     }
 
     @Test

@@ -147,7 +147,37 @@ public class EntryServiceImpl implements EntryService {
     }
 
     @Override
-    public List<FlatEntryDto> getFlatEntryDtos(long fromRow, int numberOfEntries) {
+    public Optional<FlatEntryDto> getNextFlatEntryDto(long bookId) {
+        String query = """
+                SELECT
+                    b."id", b."title", b."year", b."shelf_mark",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "authors",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"    
+                    ) AS "editors",
+                    CASE
+                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                        THEN NULL
+                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                    END AS "publisher"
+                FROM "books" b
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+                LEFT JOIN "published" ON b."id" = "published"."book_id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                WHERE b."id" > ?
+                GROUP BY b."id"
+                ORDER BY b."id"
+                LIMIT 1;
+                """;
+
+        return jdbcTemplate.query(query, flatEntryDtoRowMapper, bookId).stream().findFirst();
+    }
+
+    @Override
+    public List<FlatEntryDto> getFlatEntryDtos(int numberOfEntries, int fromRow) {
         String query = """
                 SELECT
                     b."id", b."title", b."year", b."shelf_mark",
@@ -168,11 +198,12 @@ public class EntryServiceImpl implements EntryService {
                 LEFT JOIN "published" ON b."id" = "published"."book_id"
                 LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
                 GROUP BY b."id"
-                HAVING b."id" > ?
-                LIMIT ?;
+                ORDER BY b."id"
+                LIMIT ?
+                OFFSET ?;
                 """;
 
-        return jdbcTemplate.query(query, flatEntryDtoRowMapper, fromRow, numberOfEntries);
+        return jdbcTemplate.query(query, flatEntryDtoRowMapper, numberOfEntries, fromRow);
 
     }
 

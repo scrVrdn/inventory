@@ -116,6 +116,23 @@ public class EntryServiceIntegrationTests {
     }
 
     @Test
+    public void testThatGetsNextFlatEntryDto() {
+        FlatEntryDto dto1 = underTest.createEmptyEntry().orElseThrow();
+        FlatEntryDto dto2 = underTest.createEmptyEntry().orElseThrow();
+        FlatEntryDto dto3 = underTest.createEmptyEntry().orElseThrow();
+
+        Optional<FlatEntryDto> result = underTest.getNextFlatEntryDto(dto1.bookId());
+        assertThat(result).isPresent();
+        assertThat(result.get()).isEqualTo(dto2);
+
+        underTest.delete(dto2.bookId());
+
+        Optional<FlatEntryDto> resultAfterDeletion = underTest.getNextFlatEntryDto(dto1.bookId());
+        assertThat(resultAfterDeletion).isPresent();
+        assertThat(resultAfterDeletion.get()).isEqualTo(dto3);
+    }
+
+    @Test
     public void testThatGetsCorrectFlatEntryDtos() {
         FlatEntryDto emptyEntry1 = underTest.createEmptyEntry().orElseThrow();
         FullEntryDto entry1 = TestDataUtil.createTestEntry();

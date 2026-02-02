@@ -18,7 +18,9 @@ public interface EntryService {
 
     Optional<FlatEntryDto> getFlatEntryDto(long bookId);
 
-    List<FlatEntryDto> getFlatEntryDtos(long fromRow, int numberOfEntries);
+    Optional<FlatEntryDto> getNextFlatEntryDto(long bookId);
+
+    List<FlatEntryDto> getFlatEntryDtos(int numberOfEntries, int fromRow);
 
     List<FlatEntryDto> getAllFlatEntryDtos();
 

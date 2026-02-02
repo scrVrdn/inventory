@@ -51,14 +51,14 @@
                                     </columnResizePolicy>
                                 </TableView>
                                 <HBox alignment="CENTER">
-                                    <Button fx:id="firstPage" text="|⮜" onAction="#handleFirstPage"/>
+                                    <Button fx:id="firstPage" text="|⮜" onAction="#goToFirstPage"/>
                                     <Button fx:id="fastBack" text="⮜⮜" onAction="#handleFastBack"/>
-                                    <Button fx:id="previousPage" text="⮜" onAction="#handlePreviousPage"/>
-                                    <TextField fx:id="currentPage"/>
+                                    <Button fx:id="previousPage" text="⮜" onAction="#goToPreviousPage"/>
+                                    <TextField fx:id="currentPage" onAction="#goToPage"/>
                                     <Label fx:id="totalPageCountLabel"/>
-                                    <Button fx:id="nextPage" text="⮞" onAction="#handleNextPage"/>
+                                    <Button fx:id="nextPage" text="⮞" onAction="#goToNextPage"/>
                                     <Button fx:id="fastForward" text="⮞⮞" onAction="#handleFastForward"/>
-                                    <Button fx:id="lastPage" text="⮞|" onAction="#handleLastPage"/>
+                                    <Button fx:id="lastPage" text="⮞|" onAction="#goToLastPage"/>
                                 </HBox>
                             </VBox>
                         </content>
