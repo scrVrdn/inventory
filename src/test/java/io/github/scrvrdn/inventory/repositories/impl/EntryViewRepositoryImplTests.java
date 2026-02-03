@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import io.github.scrvrdn.inventory.mappers.EntryDtoExtractor;
+import io.github.scrvrdn.inventory.mappers.EntryDtoListExtractor;
 import io.github.scrvrdn.inventory.mappers.FlatEntryDtoRowMapper;
 
 @ExtendWith(MockitoExtension.class)
@@ -20,6 +21,9 @@ public class EntryViewRepositoryImplTests {
 
     @Mock
     private EntryDtoExtractor entryDtoExtractor;
+
+    @Mock
+    private EntryDtoListExtractor entryDtoListExtractor;
 
     @Mock
     private FlatEntryDtoRowMapper flatEntryDtoRowMapper;
@@ -49,6 +53,26 @@ public class EntryViewRepositoryImplTests {
                 """;
 
                 verify(jdbcTemplate).query(expectedSql, entryDtoExtractor, bookId);
+    }
+
+    @Test
+    public void testThatFindAllGeneratesCorrectSql() {
+        String expectedSql = """
+                SELECT
+                    b."id" AS "id", b."title", b."year", b."isbn10", b."isbn13", b."shelf_mark",
+                    a."id" AS "author_id", a."last_name" AS "author_last_name", a."first_names" AS "author_first_names",
+                    e."id" AS "editor_id", e."last_name" AS "editor_last_name", e."first_names" AS "editor_first_names",
+                    "publishers"."id" AS "publisher_id", "publishers"."location" AS "publisher_location", "publishers"."name" AS "publisher_name"
+                FROM "books" b
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" a ON "book_person"."person_id" = a."id" AND "book_person"."role" = 'AUTHOR'
+                LEFT JOIN "persons" e ON "book_person"."person_id" = e."id" AND "book_person"."role" = 'EDITOR'
+                LEFT JOIN "published" ON b."id" = "published"."book_id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                ORDER BY b."id", "book_person"."role", "book_person"."order_index";
+                """;
+        underTest.findAll();
+        verify(jdbcTemplate).query(expectedSql, entryDtoListExtractor);
     }
 
     @Test

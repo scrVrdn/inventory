@@ -32,7 +32,7 @@ public class EntryDtoExtractor implements ResultSetExtractor<FullEntryDto> {
                 .shelfMark(rs.getString("shelf_mark"))
                 .build();
         
-        long publisherId = rs.getLong("publisher_id");
+        Long publisherId = rs.getLong("publisher_id");
         Publisher publisher = null;
         if (!rs.wasNull()) {
             publisher = Publisher.builder()

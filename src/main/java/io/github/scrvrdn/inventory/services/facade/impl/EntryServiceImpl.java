@@ -2,25 +2,17 @@ package io.github.scrvrdn.inventory.services.facade.impl;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Person;
-import io.github.scrvrdn.inventory.dto.Publisher;
-import io.github.scrvrdn.inventory.mappers.EntryDtoExtractor;
-import io.github.scrvrdn.inventory.mappers.FlatEntryDtoRowMapper;
 import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.BookUpdateRequest;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
-import io.github.scrvrdn.inventory.repositories.BookPersonRepository;
-import io.github.scrvrdn.inventory.repositories.BookPublisherRepository;
-import io.github.scrvrdn.inventory.repositories.BookRepository;
 import io.github.scrvrdn.inventory.repositories.EntryViewRepository;
 import io.github.scrvrdn.inventory.services.BookService;
 import io.github.scrvrdn.inventory.services.PersonService;
@@ -29,10 +21,6 @@ import io.github.scrvrdn.inventory.services.facade.EntryService;
 
 @Service
 public class EntryServiceImpl implements EntryService {
-    
-    private final BookRepository bookRepository;
-    private final BookPersonRepository bookPersonRepository;
-    private final BookPublisherRepository bookPublisherRepository;
 
     private final EntryViewRepository entryViewRepository;
     private final BookService bookService;
@@ -40,19 +28,11 @@ public class EntryServiceImpl implements EntryService {
     private final PublisherService publisherService;
 
     public EntryServiceImpl(
-        final BookRepository bookRepository,
-        final BookPersonRepository bookPersonRepository,
-        final BookPublisherRepository bookPublisherRepository,
-
         final EntryViewRepository entryViewRepository,
         final BookService bookService,
         final PersonService personService,
         final PublisherService publisherService
     ) {
-        this.bookRepository = bookRepository;
-        this.bookPersonRepository = bookPersonRepository;
-        this.bookPublisherRepository = bookPublisherRepository;
-
         this.entryViewRepository = entryViewRepository;
         this.bookService = bookService;
         this.personService = personService;
@@ -78,20 +58,7 @@ public class EntryServiceImpl implements EntryService {
 
     @Override
     public List<FullEntryDto> findAll() {
-        List<Book> books = bookRepository.findAll();
-        
-        Map<Long, List<Person>> authors = bookPersonRepository.findAllAuthorsGroupedByBookId();
-        Map<Long, List<Person>> editors = bookPersonRepository.findAllEditorsGroupedByBookId();
-        Map<Long, Publisher> publishers = bookPublisherRepository.findPublishersGroupedByBookId();
-
-        return books.stream()
-                    .map(b -> FullEntryDto.builder()
-                        .book(b)
-                        .authors(authors.get(b.getId()))
-                        .editors(editors.get(b.getId()))
-                        .publisher(publishers.get(b.getId()))
-                        .build()
-                    ).toList();
+        return entryViewRepository.findAll();
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.mappers.EntryDtoExtractor;
+import io.github.scrvrdn.inventory.mappers.EntryDtoListExtractor;
 import io.github.scrvrdn.inventory.mappers.FlatEntryDtoRowMapper;
 import io.github.scrvrdn.inventory.repositories.EntryViewRepository;
 
@@ -17,16 +18,32 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final EntryDtoExtractor entryDtoExtractor;
+    private final EntryDtoListExtractor entryDtoListExtractor;
     private final FlatEntryDtoRowMapper flatEntryDtoRowMapper;
 
-    public EntryViewRepositoryImpl(final JdbcTemplate jdbcTemplate, final EntryDtoExtractor entryDtoExtractor, final FlatEntryDtoRowMapper flatEntryDtoRowMapper) {
+    public EntryViewRepositoryImpl(final JdbcTemplate jdbcTemplate, final EntryDtoExtractor entryDtoExtractor, final FlatEntryDtoRowMapper flatEntryDtoRowMapper, final EntryDtoListExtractor entryDtoListExtractor) {
         this.jdbcTemplate = jdbcTemplate;
         this.entryDtoExtractor = entryDtoExtractor;
+        this.entryDtoListExtractor = entryDtoListExtractor;
         this.flatEntryDtoRowMapper = flatEntryDtoRowMapper;
     }
 
     public List<FullEntryDto> findAll() {
-        return null;
+        String query = """
+                SELECT
+                    b."id" AS "id", b."title", b."year", b."isbn10", b."isbn13", b."shelf_mark",
+                    a."id" AS "author_id", a."last_name" AS "author_last_name", a."first_names" AS "author_first_names",
+                    e."id" AS "editor_id", e."last_name" AS "editor_last_name", e."first_names" AS "editor_first_names",
+                    "publishers"."id" AS "publisher_id", "publishers"."location" AS "publisher_location", "publishers"."name" AS "publisher_name"
+                FROM "books" b
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" a ON "book_person"."person_id" = a."id" AND "book_person"."role" = 'AUTHOR'
+                LEFT JOIN "persons" e ON "book_person"."person_id" = e."id" AND "book_person"."role" = 'EDITOR'
+                LEFT JOIN "published" ON b."id" = "published"."book_id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                ORDER BY b."id", "book_person"."role", "book_person"."order_index";
+                """;
+        return jdbcTemplate.query(query, entryDtoListExtractor);
     }
 
     public Optional<FullEntryDto> findById(long id) {

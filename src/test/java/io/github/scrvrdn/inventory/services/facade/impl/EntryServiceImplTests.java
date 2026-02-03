@@ -2,6 +2,7 @@ package io.github.scrvrdn.inventory.services.facade.impl;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -56,6 +57,12 @@ public class EntryServiceImplTests {
         long bookId = 1L;
         underTest.findById(bookId);
         verify(entryViewRepository).findById(bookId);
+    }
+
+    @Test
+    public void testThatFindAllCallsEntryViewRepository() {
+        underTest.findAll();
+        verify(entryViewRepository).findAll();
     }
 
     @Test
