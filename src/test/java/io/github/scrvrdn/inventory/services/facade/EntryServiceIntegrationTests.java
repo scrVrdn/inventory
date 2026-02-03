@@ -90,7 +90,7 @@ public class EntryServiceIntegrationTests {
     }
 
     @Test
-    public void testThatGetsFlatEntryDtos() {
+    public void testThatGetsFlatEntryDtoByBookId() {
         FlatEntryDto emptyEntry = underTest.createEmptyEntry().orElseThrow();        
         FullEntryDto entry = TestDataUtil.createTestEntry();
         entry.getBook().setId(emptyEntry.bookId());
@@ -101,7 +101,7 @@ public class EntryServiceIntegrationTests {
         underTest.update(entry);
         FlatEntryDto entryRow = TestDataUtil.createEntryRowFromEntry(entry);
 
-        Optional<FlatEntryDto> result = underTest.getFlatEntryDto(entry.getBook().getId());
+        Optional<FlatEntryDto> result = underTest.getFlatEntryDtoByBookId(entry.getBook().getId());
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(entryRow);
     }
@@ -110,30 +110,30 @@ public class EntryServiceIntegrationTests {
     public void testThatGetsEmptyFlatEntryDto() {
         FlatEntryDto dto = underTest.createEmptyEntry().orElseThrow();
 
-        Optional<FlatEntryDto> result = underTest.getFlatEntryDto(dto.bookId());
+        Optional<FlatEntryDto> result = underTest.getFlatEntryDtoByBookId(dto.bookId());
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(dto);
     }
 
     @Test
-    public void testThatGetsNextFlatEntryDto() {
+    public void testThatGetsNextFlatEntryDtoAfterBookId() {
         FlatEntryDto dto1 = underTest.createEmptyEntry().orElseThrow();
         FlatEntryDto dto2 = underTest.createEmptyEntry().orElseThrow();
         FlatEntryDto dto3 = underTest.createEmptyEntry().orElseThrow();
 
-        Optional<FlatEntryDto> result = underTest.getNextFlatEntryDto(dto1.bookId());
+        Optional<FlatEntryDto> result = underTest.getNextFlatEntryDtoAfterBookId(dto1.bookId());
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(dto2);
 
         underTest.delete(dto2.bookId());
 
-        Optional<FlatEntryDto> resultAfterDeletion = underTest.getNextFlatEntryDto(dto1.bookId());
+        Optional<FlatEntryDto> resultAfterDeletion = underTest.getNextFlatEntryDtoAfterBookId(dto1.bookId());
         assertThat(resultAfterDeletion).isPresent();
         assertThat(resultAfterDeletion.get()).isEqualTo(dto3);
     }
 
     @Test
-    public void testThatGetsCorrectFlatEntryDtos() {
+    public void testThatGetsCorrectFlatEntryDtosForAPage() {
         FlatEntryDto emptyEntry1 = underTest.createEmptyEntry().orElseThrow();
         FullEntryDto entry1 = TestDataUtil.createTestEntry();
         entry1.getBook().setId(emptyEntry1.bookId());

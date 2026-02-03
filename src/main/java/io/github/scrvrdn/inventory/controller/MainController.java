@@ -287,7 +287,7 @@ public class MainController {
 
     private void fillTable() {
         FlatEntryDto lastEntry = entryRows.getLast();
-        Optional<FlatEntryDto> nextEntry = entryService.getNextFlatEntryDto(lastEntry.bookId());
+        Optional<FlatEntryDto> nextEntry = entryService.getNextFlatEntryDtoAfterBookId(lastEntry.bookId());
         if (nextEntry.isPresent()) entryRows.addLast(nextEntry.get());
     }
 

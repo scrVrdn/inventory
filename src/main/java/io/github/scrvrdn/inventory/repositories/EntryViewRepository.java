@@ -1,17 +1,12 @@
-package io.github.scrvrdn.inventory.services.facade;
-
+package io.github.scrvrdn.inventory.repositories;
 
 import java.util.List;
 import java.util.Optional;
 
-import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
+import io.github.scrvrdn.inventory.dto.FullEntryDto;
 
-
-public interface EntryService {
-
-    Optional<FlatEntryDto> createEmptyEntry();
-
+public interface EntryViewRepository {
     List<FullEntryDto> findAll();
 
     Optional<FullEntryDto> findById(long id);
@@ -23,10 +18,4 @@ public interface EntryService {
     List<FlatEntryDto> getFlatEntryDtos(int numberOfEntries, int fromRow);
 
     List<FlatEntryDto> getAllFlatEntryDtos();
-
-    FlatEntryDto update(FullEntryDto entry);
-
-    void delete(long bookId);
-
-    int numberOfRows();
 }

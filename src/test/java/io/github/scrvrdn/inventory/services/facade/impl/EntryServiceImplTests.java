@@ -18,8 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
-import io.github.scrvrdn.inventory.mappers.EntryDtoExtractor;
-import io.github.scrvrdn.inventory.mappers.FlatEntryDtoRowMapper;
+import io.github.scrvrdn.inventory.repositories.EntryViewRepository;
 import io.github.scrvrdn.inventory.services.BookService;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,10 +31,7 @@ public class EntryServiceImplTests {
     private BookService bookService;
 
     @Mock
-    private EntryDtoExtractor entryDtoExtractor;
-
-    @Mock
-    private FlatEntryDtoRowMapper flatEntryDtoRowMapper;
+    private EntryViewRepository entryViewRepository;
 
     @Spy
     @InjectMocks
@@ -56,154 +52,38 @@ public class EntryServiceImplTests {
     }
 
     @Test
-    public void testThatFindByIdGeneratesCorrectSql() {
+    public void testThatFindByIdCallsEntryViewRepository() {
         long bookId = 1L;
         underTest.findById(bookId);
-
-        String expectedSql = """
-                SELECT
-                    b."id" AS "id", b."title", b."year", b."isbn10", b."isbn13", b."shelf_mark",
-                    a."id" AS "author_id", a."last_name" AS "author_last_name", a."first_names" AS "author_first_names",
-                    e."id" AS "editor_id", e."last_name" AS "editor_last_name", e."first_names" AS "editor_first_names",
-                    "publishers"."id" AS "publisher_id", "publishers"."location" AS "publisher_location", "publishers"."name" AS "publisher_name"
-                FROM "books" b
-                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
-                LEFT JOIN "persons" a ON "book_person"."person_id" = a."id" AND "book_person"."role" = 'AUTHOR'
-                LEFT JOIN "persons" e ON "book_person"."person_id" = e."id" AND "book_person"."role" = 'EDITOR'
-                LEFT JOIN "published" ON b."id" = "published"."book_id"
-                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                WHERE b."id" = ?
-                ORDER BY "book_person"."role", "book_person"."order_index";
-                """;
-
-                verify(jdbcTemplate).query(expectedSql, entryDtoExtractor, bookId);
+        verify(entryViewRepository).findById(bookId);
     }
 
     @Test
-    public void testThatGetFlatEntryDtoGeneratesCorrectSql() {
+    public void testThatGetFlatEntryDtoByBookIdCallsEntryViewRepository() {
         long bookId = 1L;
-        
-
-        String expectedSql = """
-                SELECT
-                    b."id", b."title", b."year", b."shelf_mark",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
-                    ) AS "authors",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"    
-                    ) AS "editors",
-                    CASE
-                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
-                        THEN NULL
-                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
-                    END AS "publisher"
-                FROM "books" b
-                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
-                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
-                LEFT JOIN "published" ON b."id" = "published"."book_id"
-                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                WHERE b."id" = ?
-                GROUP BY b."id";
-                """;
-            
-            underTest.getFlatEntryDto(bookId);
-            verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper, bookId);
+        underTest.getFlatEntryDtoByBookId(bookId);
+        verify(entryViewRepository).getFlatEntryDtoByBookId(bookId);
     }
 
     @Test
-    public void testThatGetNextFlatEntryDtoGeneratesCorrectSql() {
+    public void testThatGetNextFlatEntryDtoAfterBookIdCallsEntryViewRepository() {
         long bookId = 1L;
-        
-        String expectedSql = """
-                SELECT
-                    b."id", b."title", b."year", b."shelf_mark",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
-                    ) AS "authors",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"    
-                    ) AS "editors",
-                    CASE
-                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
-                        THEN NULL
-                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
-                    END AS "publisher"
-                FROM "books" b
-                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
-                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
-                LEFT JOIN "published" ON b."id" = "published"."book_id"
-                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                WHERE b."id" > ?
-                GROUP BY b."id"
-                ORDER BY b."id"
-                LIMIT 1;
-                """;
-
-            underTest.getNextFlatEntryDto(bookId);
-            verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper, bookId);
+        underTest.getNextFlatEntryDtoAfterBookId(bookId);
+        verify(entryViewRepository).getNextFlatEntryDtoAfterBookId(bookId);
     }
 
     @Test
-    public void testThatGetNFlatEntryDtosGeneratesCorrectSql() {
-        String expectedSql = """
-                SELECT
-                    b."id", b."title", b."year", b."shelf_mark",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
-                    ) AS "authors",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
-                    ) AS "editors",
-                    CASE
-                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
-                        THEN NULL
-                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
-                    END AS "publisher"
-                FROM "books" b
-                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
-                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
-                LEFT JOIN "published" ON b."id" = "published"."book_id"
-                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                GROUP BY b."id"
-                ORDER BY b."id"
-                LIMIT ?
-                OFFSET ?;
-                """;
-        
+    public void testThatGetFlatEntryDtosGeneratesCallsEntryViewRepository() {
         int numberOfEntries = 3;
         int fromRow = 4;
         underTest.getFlatEntryDtos(numberOfEntries, fromRow);
-        verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper, numberOfEntries, fromRow);
+        verify(entryViewRepository).getFlatEntryDtos(numberOfEntries, fromRow);
     }
 
     @Test
-    public void testThatGetAllFlatEntryDtoGeneratesCorrectSql() {
+    public void testThatGetAllFlatEntryDtoCallsEntryViewRepository() {
         underTest.getAllFlatEntryDtos();
-
-        String expectedSql = """
-                SELECT
-                    b."id", b."title", b."year", b."shelf_mark",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
-                    ) AS "authors",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
-                    ) AS "editors",
-                    CASE
-                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
-                        THEN NULL
-                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
-                    END AS "publisher"
-                FROM "books" b
-                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
-                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
-                LEFT JOIN "published" ON b."id" = "published"."book_id"
-                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                GROUP BY b."id";
-                """;
-
-        verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper);
+        verify(entryViewRepository).getAllFlatEntryDtos();
     }
 
     @Test
