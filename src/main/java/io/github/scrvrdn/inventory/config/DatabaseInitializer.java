@@ -1,4 +1,4 @@
-package io.github.scrvrdn.inventory.services;
+package io.github.scrvrdn.inventory.config;
 
 import java.sql.Connection;
 import java.sql.SQLException;
