@@ -50,7 +50,7 @@ A Spring Boot desktop app for managing book collections (for now, but easily exp
 
 * No JPA/Hibernate, instead JdbcTemplate for database access: no ORM overhead, SQLite optimized
 
-* lazy approach to updating for user convenience: updating persons or publishers results in creating a new table entry (or if an identical entry already exists, this will be used instead); then at start up all unused persons or publishers (i. e. those with no association with a book_id) will be deleted from db via the cleanup services
+* lazy approach to updating for user convenience: updating persons or publishers results in creating a new table entry (or if an identical entry already exists, this will be used instead); then at the next start up of the app all unused persons or publishers (i. e. those with no association with a book_id) will be deleted from the database via the cleanup services
 
 
 ## Tech Stack
