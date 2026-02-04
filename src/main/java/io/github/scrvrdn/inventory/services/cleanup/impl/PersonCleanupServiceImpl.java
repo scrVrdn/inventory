@@ -2,6 +2,7 @@ package io.github.scrvrdn.inventory.services.cleanup.impl;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import io.github.scrvrdn.inventory.services.cleanup.PersonCleanupService;
 
@@ -14,6 +15,7 @@ public class PersonCleanupServiceImpl implements PersonCleanupService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    @Transactional
     @Override
     public void cleanupUnusedPersons() {
         String query = """
