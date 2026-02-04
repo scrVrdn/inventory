@@ -1,4 +1,4 @@
-INSERT INTO "books" ("id","title", "year", "isbn10", "isbn13", "shelf_mark")
+INSERT OR IGNORE INTO "books" ("id","title", "year", "isbn10", "isbn13", "shelf_mark")
 VALUES
     (1, 'The Quantum Horizon', 2018, '0374285719', '978-0374285715', 'SF-2018-QH'),
     (2, 'Whispers of the Forgotten', 2019, '1250304768', '978-1250304766', 'FIC-2019-WF'),
@@ -51,7 +51,7 @@ VALUES
     (49, 'Quantum Landscapes', 2021, '0062693792', '978-0062693792', 'SF-2021-QL'),
     (50, 'Echoes of Resilience', 2018, '0316166448', '978-0316166445', 'URB-2018-ER');
 
-INSERT INTO "persons" ("id", "last_name", "first_names")
+INSERT OR IGNORE INTO "persons" ("id", "last_name", "first_names")
 VALUES
     (1, 'Rodriguez', 'Elena Maria'),
     (2, 'Chen', 'Michael David'),
@@ -104,7 +104,7 @@ VALUES
     (49, 'Watanabe', 'Keiko Sophie'),
     (50, 'Schwarz', 'Martin Rudolf');
 
-INSERT INTO "book_person" ("book_id", "person_id", "role", "order_index")
+INSERT OR IGNORE INTO "book_person" ("book_id", "person_id", "role", "order_index")
 VALUES
     (1, 1, 'AUTHOR', 0),
     (1, 2, 'EDITOR', 1),
@@ -257,7 +257,7 @@ VALUES
     (50, 49, 'EDITOR', 1),
     (50, 50, 'AUTHOR', 2);
 
-INSERT INTO "publishers" ("id", "name", "location")
+INSERT OR IGNORE INTO "publishers" ("id", "name", "location")
 VALUES
     (1, 'Quantum Press', 'New York'),
     (2, 'Horizon Academic Publishing', 'London'),
@@ -285,7 +285,7 @@ VALUES
     (24, 'Southern Cross Publishing', 'Wellington'),
     (25, 'Quantum Horizon Media', 'San Francisco');
 
-INSERT INTO "published" ("book_id", "publisher_id")
+INSERT OR IGNORE INTO "published" ("book_id", "publisher_id")
 VALUES
     (1, 1),
     (2, 1),

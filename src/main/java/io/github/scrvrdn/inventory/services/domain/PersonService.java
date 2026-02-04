@@ -1,4 +1,4 @@
-package io.github.scrvrdn.inventory.services;
+package io.github.scrvrdn.inventory.services.domain;
 
 import java.util.List;
 

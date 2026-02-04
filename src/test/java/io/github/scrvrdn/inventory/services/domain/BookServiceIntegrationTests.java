@@ -1,10 +1,11 @@
-package io.github.scrvrdn.inventory.services;
+package io.github.scrvrdn.inventory.services.domain;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.jdbc.JdbcTestUtils;
+
 
 @SpringBootTest
 public class BookServiceIntegrationTests {

@@ -1,4 +1,4 @@
-package io.github.scrvrdn.inventory.services.impl;
+package io.github.scrvrdn.inventory.services.domain.impl;
 
 import static org.mockito.Mockito.verify;
 

@@ -1,4 +1,4 @@
-package io.github.scrvrdn.inventory.services;
+package io.github.scrvrdn.inventory.services.domain;
 
 import io.github.scrvrdn.inventory.dto.Publisher;
 

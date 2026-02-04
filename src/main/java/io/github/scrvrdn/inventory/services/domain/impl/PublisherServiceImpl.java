@@ -1,10 +1,10 @@
-package io.github.scrvrdn.inventory.services.impl;
+package io.github.scrvrdn.inventory.services.domain.impl;
 
 import org.springframework.stereotype.Service;
 
 import io.github.scrvrdn.inventory.dto.Publisher;
 import io.github.scrvrdn.inventory.repositories.PublisherRepository;
-import io.github.scrvrdn.inventory.services.PublisherService;
+import io.github.scrvrdn.inventory.services.domain.PublisherService;
 
 @Service
 public class PublisherServiceImpl implements PublisherService {

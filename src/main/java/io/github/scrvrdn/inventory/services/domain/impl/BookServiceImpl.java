@@ -1,4 +1,4 @@
-package io.github.scrvrdn.inventory.services.impl;
+package io.github.scrvrdn.inventory.services.domain.impl;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ import io.github.scrvrdn.inventory.dto.BookUpdateRequest;
 import io.github.scrvrdn.inventory.repositories.BookPersonRepository;
 import io.github.scrvrdn.inventory.repositories.BookPublisherRepository;
 import io.github.scrvrdn.inventory.repositories.BookRepository;
-import io.github.scrvrdn.inventory.services.BookService;
+import io.github.scrvrdn.inventory.services.domain.BookService;
 
 @Service
 public class BookServiceImpl implements BookService {

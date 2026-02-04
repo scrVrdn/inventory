@@ -14,9 +14,9 @@ import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.BookUpdateRequest;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import io.github.scrvrdn.inventory.repositories.EntryViewRepository;
-import io.github.scrvrdn.inventory.services.BookService;
-import io.github.scrvrdn.inventory.services.PersonService;
-import io.github.scrvrdn.inventory.services.PublisherService;
+import io.github.scrvrdn.inventory.services.domain.BookService;
+import io.github.scrvrdn.inventory.services.domain.PersonService;
+import io.github.scrvrdn.inventory.services.domain.PublisherService;
 import io.github.scrvrdn.inventory.services.facade.EntryService;
 
 @Service

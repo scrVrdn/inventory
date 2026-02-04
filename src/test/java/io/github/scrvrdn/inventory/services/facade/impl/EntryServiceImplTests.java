@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import io.github.scrvrdn.inventory.repositories.EntryViewRepository;
-import io.github.scrvrdn.inventory.services.BookService;
+import io.github.scrvrdn.inventory.services.domain.BookService;
 
 @ExtendWith(MockitoExtension.class)
 public class EntryServiceImplTests {
