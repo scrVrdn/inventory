@@ -63,10 +63,12 @@ A Spring Boot desktop app for managing book collections (for now, but easily exp
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white&style=flat)
 
 ### Frontend
+<div>
+  <img src="https://img.shields.io/badge/JavaFX-FC4C02?logo=javafx&logoColor=white&style=flat" alt="JavaFX"/>
+  <img src="https://img.shields.io/badge/FXML-FC4C02?logo=fxml&logoColor=white&style=flat" alt="FXML"/>
+  <img src="https://img.shields.io/badge/CSS-1572B6?logo=css3&logoColor=white&style=flat" alt="CSS"/>
+</div>
 
-<img src="https://img.shields.io/badge/JavaFX-FC4C02?logo=javafx&logoColor=white&style=flat" alt="JavaFX"/> 
-<img src="https://img.shields.io/badge/FXML-FC4C02?logo=fxml&logoColor=white&style=flat" alt="FXML"/> 
-<img src="https://img.shields.io/badge/CSS-1572B6?logo=css3&logoColor=white&style=flat" alt="CSS"/>
 
 
 ### Core
