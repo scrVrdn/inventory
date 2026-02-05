@@ -8,11 +8,14 @@ import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.services.facade.EntryService;
 import io.github.scrvrdn.inventory.controls.DetailsPane;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -40,17 +43,22 @@ public class MainController {
     @FXML private Button addNewEntryButton;
     @FXML private Button deleteEntryButton;
 
+    @FXML private Label itemsPerPageLabel;
+    @FXML private ComboBox<Integer> itemsPerPageComboBox; 
+    private IntegerProperty itemsPerPage = new SimpleIntegerProperty();
+
     @FXML private Button firstPage;
     @FXML private Button fastBack;
     @FXML private Button previousPage;
     @FXML private Button nextPage;
     @FXML private Button fastForward;
     @FXML private Button lastPage;
-    @FXML private TextField currentPage;
+    @FXML private TextField currentPageField;
     @FXML private Label totalPageCountLabel;
 
     private DetailsPane detailsPane;
-    private int itemsPerPage = 5;
+    
+    
     private int totalNumberOfRows;
     private int currentPageIndex = 0;
     private int totalPageCount;
@@ -65,10 +73,11 @@ public class MainController {
     @FXML
     private void initialize() {
         createTable();
+        detailsPane.setSaveCallback(this::handleSave);
+        setupItemsPerPageCombobox();        
         setupCurrentPageField();
         calculateTotalPageCount();
-        refreshTable();
-        detailsPane.setSaveCallback(this::handleSave);
+        updateTableViewPage();
     }
 
     private void createTable() {
@@ -81,7 +90,7 @@ public class MainController {
         shelfMark.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().shelfMark()));
 
         table.setItems(entryRows);
-        updateTableViewPage();
+        
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 detailsPane.setVisibility(true);
@@ -92,6 +101,14 @@ public class MainController {
                 detailsPane.setVisibility(false);
             }
         });
+    }
+
+    private void setupItemsPerPageCombobox() {
+        itemsPerPage.bind(itemsPerPageComboBox.getSelectionModel().selectedItemProperty());
+        
+        ObservableList<Integer> list = itemsPerPageComboBox.getItems();
+        list.addAll(10, 25, 50, 75, 100);        
+        itemsPerPageComboBox.getSelectionModel().select(0);
     }
 
     private void setupCurrentPageField() {
@@ -108,36 +125,36 @@ public class MainController {
             }
         );
 
-        currentPage.setTextFormatter(formatter);
+        currentPageField.setTextFormatter(formatter);
     }
 
     private void refreshTable() {
-        currentPage.setText(String.valueOf(currentPageIndex + 1));
+        currentPageField.setText(String.valueOf(currentPageIndex + 1));
         validatePageButtons();
     }
 
     private void calculateTotalPageCount() {
         totalNumberOfRows = entryService.numberOfRows();
-        totalPageCount = (totalNumberOfRows + itemsPerPage - 1) / itemsPerPage;
+        totalPageCount = (totalNumberOfRows + itemsPerPage.intValue() - 1) / itemsPerPage.intValue();
         totalPageCountLabel.setText("/ " + String.valueOf(totalPageCount));
     }
 
     private void updateTableViewPage() {
-        int fromRow = currentPageIndex * itemsPerPage;
-        currentPage.setText(String.valueOf(currentPageIndex + 1));
+        int fromRow = currentPageIndex * itemsPerPage.intValue();
+        currentPageField.setText(String.valueOf(currentPageIndex + 1));
         validatePageButtons();
-        entryRows.setAll(entryService.getFlatEntryDtos(itemsPerPage, fromRow));
+        entryRows.setAll(entryService.getFlatEntryDtos(itemsPerPage.intValue(), fromRow));
     }
 
     @FXML
     private void goToPage() {
-        Integer requestedPage = (Integer) currentPage.getTextFormatter().getValue();
+        Integer requestedPage = (Integer) currentPageField.getTextFormatter().getValue();
         
         if (requestedPage != null && requestedPage >= 1 && requestedPage <= totalPageCount) {
             currentPageIndex = requestedPage - 1;
             updateTableViewPage();
         } else {
-            currentPage.setText(String.valueOf(currentPageIndex + 1));
+            currentPageField.setText(String.valueOf(currentPageIndex + 1));
         }
     }
 
@@ -217,7 +234,7 @@ public class MainController {
     }
 
     private boolean lastPageIsFull() {
-        return totalNumberOfRows % itemsPerPage == 0;
+        return totalNumberOfRows % itemsPerPage.intValue() == 0;
     }
 
     private boolean onLastPage() {
@@ -289,6 +306,14 @@ public class MainController {
         FlatEntryDto lastEntry = entryRows.getLast();
         Optional<FlatEntryDto> nextEntry = entryService.getNextFlatEntryDtoAfterBookId(lastEntry.bookId());
         if (nextEntry.isPresent()) entryRows.addLast(nextEntry.get());
+    }
+
+    @FXML
+    private void handleItemsPerPageSelection() {
+        currentPageIndex = 0;
+        totalPageCount = (totalNumberOfRows + itemsPerPage.intValue() - 1) / itemsPerPage.intValue();
+        totalPageCountLabel.setText("/ " + String.valueOf(totalPageCount));
+        updateTableViewPage();
     }
 
     @FXML

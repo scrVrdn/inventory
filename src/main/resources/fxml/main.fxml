@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.Menu?>
@@ -34,8 +35,12 @@
                                 <ToolBar>
                                     <Button text="New Entry" fx:id="addNewEntryButton" onAction="#handleAddNewEntryButton"/>
                                     <Button text="Delete Entry" fx:id="deleteEntryButton" onAction="#handleDeleteEntryButton"/>
+                                    
                                 </ToolBar>
-
+                                <HBox alignment="CENTER_RIGHT">
+                                    <Label fx:id="itemsPerPageLabel" text="items per page:"/>
+                                    <ComboBox fx:id="itemsPerPageComboBox" onAction="#handleItemsPerPageSelection"/>
+                                </HBox>
                                 <TableView fx:id="table" VBox.vgrow="ALWAYS">
                                     <columns>
                                         <TableColumn fx:id="id" text="ID" styleClass="table-column"/>
@@ -54,7 +59,7 @@
                                     <Button fx:id="firstPage" text="|⮜" onAction="#goToFirstPage"/>
                                     <Button fx:id="fastBack" text="⮜⮜" onAction="#handleFastBack"/>
                                     <Button fx:id="previousPage" text="⮜" onAction="#goToPreviousPage"/>
-                                    <TextField fx:id="currentPage" onAction="#goToPage"/>
+                                    <TextField fx:id="currentPageField" onAction="#goToPage"/>
                                     <Label fx:id="totalPageCountLabel"/>
                                     <Button fx:id="nextPage" text="⮞" onAction="#goToNextPage"/>
                                     <Button fx:id="fastForward" text="⮞⮞" onAction="#handleFastForward"/>
