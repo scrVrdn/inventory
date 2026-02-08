@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
+import io.github.scrvrdn.inventory.dto.Page;
 
 public interface EntryViewRepository {
     List<FullEntryDto> findAll();
@@ -16,6 +17,8 @@ public interface EntryViewRepository {
     Optional<FlatEntryDto> getNextFlatEntryDtoAfterBookId(long bookId);
 
     List<FlatEntryDto> getFlatEntryDtos(int numberOfEntries, int fromRow);
+
+    public Page getSortedAndFilteredEntries(int numberOfEntries, int pageIndex, String sortBy, String[] searchString);
 
     List<FlatEntryDto> getAllFlatEntryDtos();
 }

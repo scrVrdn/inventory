@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
+import io.github.scrvrdn.inventory.dto.Page;
 import io.github.scrvrdn.inventory.dto.Person;
 import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.BookUpdateRequest;
@@ -75,6 +76,17 @@ public class EntryServiceImpl implements EntryService {
     public List<FlatEntryDto> getFlatEntryDtos(int numberOfEntries, int fromRow) {
         return entryViewRepository.getFlatEntryDtos(numberOfEntries, fromRow);
     }
+
+    @Override
+    public Page getSortedAndFilteredEntries(int pageSize, int pageIndex, String sortBy, String searchString) {
+        String[] search = convertSearchString(searchString);
+        return entryViewRepository.getSortedAndFilteredEntries(pageSize, pageIndex, sortBy, search);
+    }
+
+    private String[] convertSearchString(String searchString) {
+        return searchString.split("\\s");
+    }
+
 
     @Override
     public List<FlatEntryDto> getAllFlatEntryDtos() {

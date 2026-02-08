@@ -12,10 +12,12 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
+import io.github.scrvrdn.inventory.dto.Page;
 import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.contains;
 
 @SpringBootTest
 public class EntryServiceIntegrationTests {
@@ -145,6 +147,23 @@ public class EntryServiceIntegrationTests {
         List<FlatEntryDto> result = underTest.getFlatEntryDtos(1, 1);
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().bookId()).isEqualTo(entry2.getBook().getId());
+    }
+
+    @Test
+    public void testThatGetsCorrectSortedAndFilteredDtosForPage() {
+        FlatEntryDto emptyEntry1 = underTest.createEmptyEntry().orElseThrow();
+        FullEntryDto entry1 = TestDataUtil.createTestEntry();
+        entry1.getBook().setId(emptyEntry1.bookId());
+        FlatEntryDto expectedEntry = underTest.update(entry1);
+
+        FlatEntryDto emptyEntry2 = underTest.createEmptyEntry().orElseThrow();
+        FullEntryDto entry2 = TestDataUtil.createTestEntry2();
+        entry2.getBook().setId(emptyEntry2.bookId());
+        underTest.update(entry2);
+        
+
+        Page result = underTest.getSortedAndFilteredEntries(10, 0, null, "ed");
+        assertThat(result.entries()).containsExactly(expectedEntry);
     }
 
     @Test

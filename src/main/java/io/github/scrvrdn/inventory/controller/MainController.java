@@ -1,10 +1,12 @@
 package io.github.scrvrdn.inventory.controller;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.stereotype.Controller;
 
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
+import io.github.scrvrdn.inventory.dto.Page;
 import io.github.scrvrdn.inventory.services.facade.EntryService;
 import io.github.scrvrdn.inventory.controls.DetailsPane;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
@@ -21,6 +23,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.control.TableColumn.SortType;
 import javafx.util.converter.IntegerStringConverter;
 
 
@@ -46,6 +49,9 @@ public class MainController {
     @FXML private Label itemsPerPageLabel;
     @FXML private ComboBox<Integer> itemsPerPageComboBox; 
     private IntegerProperty itemsPerPage = new SimpleIntegerProperty();
+
+    private String currentFilter;
+    private String sortBy;
 
     @FXML private Button firstPage;
     @FXML private Button fastBack;
@@ -101,6 +107,33 @@ public class MainController {
                 detailsPane.setVisibility(false);
             }
         });
+
+        table.setSortPolicy(table -> {
+            ObservableList<TableColumn<FlatEntryDto, ?>> sortOrder = table.getSortOrder();
+            if (!sortOrder.isEmpty()) {
+                TableColumn<FlatEntryDto, ?> primaryCol = sortOrder.get(0);
+                TableColumn.SortType sortType = primaryCol.getSortType();
+
+                sortBy = sortType == SortType.ASCENDING ? primaryCol.getId() : primaryCol.getId() + "DESC";
+            
+            }
+            
+            getEntries().thenAccept(data -> {
+                entryRows.setAll(data);
+                table.setItems(entryRows);
+            });
+            
+
+            return true;
+        });
+    }
+
+    private CompletableFuture<ObservableList<FlatEntryDto>> getEntries() {
+        return CompletableFuture.supplyAsync(() -> {
+            Page page = entryService.getSortedAndFilteredEntries(itemsPerPage.intValue(), currentPageIndex, sortBy, currentFilter);
+            totalNumberOfRows = page.totalNumberOfRows();
+            return page.entries();
+        }).thenApply(FXCollections::observableArrayList);
     }
 
     private void setupItemsPerPageCombobox() {
@@ -194,11 +227,11 @@ public class MainController {
         updateTableViewPage();
     }
 
-    private ObservableList<FlatEntryDto> getEntries() {
-        ObservableList<FlatEntryDto> rows = FXCollections.observableArrayList();
-        rows.addAll(entryService.getAllFlatEntryDtos());
-        return rows;
-    }
+    // private ObservableList<FlatEntryDto> getEntries() {
+    //     ObservableList<FlatEntryDto> rows = FXCollections.observableArrayList();
+    //     rows.addAll(entryService.getAllFlatEntryDtos());
+    //     return rows;
+    // }
 
     @FXML
     private void handleAddNewEntryButton() {
