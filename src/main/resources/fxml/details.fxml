@@ -9,6 +9,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
 <StackPane fx:id="detailsPane" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="io.github.scrvrdn.inventory.controls.DetailsPane">
@@ -16,29 +17,31 @@
     <BorderPane fx:id="details" visible="false">
         <center>
             <ScrollPane>
-                <VBox >
+                <VBox>
                     <HBox>
                         <Label text="Title" styleClass="details-label"/>
                         <DynamicTextField fx:id="titleField" styleClass="details-field"/>
                     </HBox>
-                    <VBox fx:id="authorBox">
-                        <HBox>
+                    <VBox fx:id="authorBox" >
+                        <HBox styleClass="details-person-hbox">
                             <Label text="Author" styleClass="details-label"/>
                             <DynamicTextField fx:id="authorLastNameField" styleClass="details-field"/>
                             <Label text="," styleClass="details-delimiter"/>
                             <DynamicTextField fx:id="authorFirstNameField" styleClass="details-field"/>
-                            <Button text="+" onAction="#addAuthorTextField"/>
-                            <Button text="-" onAction="#deleteAuthorTextField"/>
+                            <Region prefWidth="10" HBox.hgrow="ALWAYS"/>
+                            <Button text="+" onAction="#addAuthorTextField" styleClass="details-person-button"/>
+                            <Button text="-" onAction="#deleteAuthorTextField" styleClass="details-person-button"/>
                         </HBox>
                     </VBox>
                     <VBox fx:id="editorBox">
-                        <HBox>
+                        <HBox styleClass="details-person-hbox">
                             <Label text="Editor" styleClass="details-label"/>
                             <DynamicTextField fx:id="editorLastNameField" styleClass="details-field"/>
                             <Label text="," styleClass="details-delimiter" />
                             <DynamicTextField fx:id="editorFirstNameField" styleClass="details-field"/>
-                            <Button text="+" onAction="#addEditorTextField"/>
-                            <Button text="-" onAction="#deleteEditorTextField"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Button text="+" onAction="#addEditorTextField" styleClass="details-person-button"/>
+                            <Button text="-" onAction="#deleteEditorTextField" styleClass="details-person-button"/>
                         </HBox>
                     </VBox>
                     <HBox>

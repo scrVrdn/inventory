@@ -19,6 +19,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 @Component
@@ -163,6 +165,8 @@ public class DetailsPane {
     @FXML
     private void addAuthorTextField() {
         HBox fields = new HBox();
+        fields.getStyleClass().add("details-person-hbox");
+
         Label label = new Label("Author");
         label.getStyleClass().add("details-label");
 
@@ -175,13 +179,18 @@ public class DetailsPane {
         DynamicTextField firstNames = new DynamicTextField();
         firstNames.getStyleClass().add("details-field");
 
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
         Button addButton = new Button("+");
         addButton.setOnAction(e -> addAuthorTextField());
+        addButton.getStyleClass().add("details-person-button");
 
         Button deleteButton = new Button("-");
         deleteButton.setOnAction(e -> deleteAuthorTextField(e));
+        deleteButton.getStyleClass().add("details-person-button");
 
-        fields.getChildren().addAll(label, lastName, delimiter, firstNames, addButton, deleteButton);
+        fields.getChildren().addAll(label, lastName, delimiter, firstNames, spacer, addButton, deleteButton);
         authorBox.getChildren().add(fields);
     }
 
@@ -204,6 +213,8 @@ public class DetailsPane {
     @FXML
     private void addEditorTextField() {
         HBox fields = new HBox();
+        fields.getStyleClass().add("details-person-hbox");
+
         Label label = new Label("Editor");
         label.getStyleClass().add("details-label");
 
@@ -216,13 +227,18 @@ public class DetailsPane {
         DynamicTextField firstNames = new DynamicTextField();
         firstNames.getStyleClass().add("details-field");
 
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
         Button addButton = new Button("+");
         addButton.setOnAction(e -> addEditorTextField());
+        addButton.getStyleClass().add("details-person-button");
 
         Button deleteButton = new Button("-");
         deleteButton.setOnAction(e -> deleteEditorTextField(e));
+        deleteButton.getStyleClass().add("details-person-button");
 
-        fields.getChildren().addAll(label, lastName, delimiter, firstNames, addButton, deleteButton);
+        fields.getChildren().addAll(label, lastName, delimiter, firstNames, spacer, addButton, deleteButton);
         editorBox.getChildren().add(fields);
     }
 

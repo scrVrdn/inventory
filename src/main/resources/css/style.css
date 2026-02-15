@@ -5,8 +5,8 @@
 }
 
 .details-delimiter
-{
-    -fx-label-padding: 5 0 0 0;
+{   
+    -fx-label-padding: 5 0 5 0;
 }
 
 .details-field
@@ -31,4 +31,27 @@
     -fx-alignment: center-right;
     -fx-label-padding: 5 5 5 5;
     
+}
+
+.details-person-button
+{   
+    -fx-font-size: 15px;
+    -fx-font-weight: BOLD;
+    
+    -fx-padding: 0 0 0 0;
+    -fx-border-radius: 50%;
+    -fx-background-radius: 50%;
+    -fx-min-width: 20px;
+    -fx-min-height: 20px;
+    -fx-max-width: 20px;
+    -fx-max-height: 20px;
+    
+    -fx-alignment: center;
+    -fx-content-display: center;
+}
+
+.details-person-hbox
+{
+    -fx-spacing: 1;
+    -fx-alignment: center left;
 }

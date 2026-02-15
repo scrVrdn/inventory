@@ -142,7 +142,6 @@ public class MainController {
     }
 
     private CompletableFuture<ObservableList<FlatEntryDto>> getEntries() {
-        System.out.println("getting entries");
         return CompletableFuture.supplyAsync(() -> {
             try {
                 PageRequest request = new PageRequest(currentPageIndex, itemsPerPage.get(), currentFilter, sortBy, sortDir, isCaseInsensitiveSort());
@@ -235,7 +234,7 @@ public class MainController {
 
     private void refreshTable() {
         currentPageField.setText(String.valueOf(currentPageIndex + 1));
-        totalPageCountLabel.setText(String.valueOf(totalPageCount));
+        totalPageCountLabel.setText("/ " + String.valueOf(totalPageCount));
         validatePageButtons();
     }
 
@@ -424,7 +423,7 @@ public class MainController {
         //     TableColumn<FlatEntryDto, ?> col = table.getSortOrder().get(0);
         //     sortKey = col.getCellData(entryRows.size() - 1);
         // }
-       
+
         Optional<FlatEntryDto> nextEntry = entryService.getNextFlatEntryDtoAfterBookId(lastEntry.bookId());
         if (nextEntry.isPresent()) entryRows.addLast(nextEntry.get());
     }

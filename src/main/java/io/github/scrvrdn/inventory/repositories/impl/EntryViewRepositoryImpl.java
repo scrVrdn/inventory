@@ -275,7 +275,7 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
     @Override
     public int findRow(long bookId, PageRequest request) {
         String orderBy = buildOrderBy(request);
-        System.out.println(orderBy);
+        
         StringBuilder sql = new StringBuilder("""
                 SELECT "row_number" FROM (
                     SELECT ROW_NUMBER() OVER(
