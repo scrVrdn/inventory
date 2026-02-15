@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Page;
+import io.github.scrvrdn.inventory.dto.PageRequest;
 import io.github.scrvrdn.inventory.dto.Person;
 import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.BookUpdateRequest;
@@ -73,20 +74,31 @@ public class EntryServiceImpl implements EntryService {
     }
 
     @Override
-    public List<FlatEntryDto> getFlatEntryDtos(int numberOfEntries, int fromRow) {
-        return entryViewRepository.getFlatEntryDtos(numberOfEntries, fromRow);
+    public List<FlatEntryDto> getFlatEntryDtos(int pageSize, int fromRow) {
+        return entryViewRepository.getFlatEntryDtos(pageSize, fromRow);
     }
 
     @Override
-    public Page getSortedAndFilteredEntries(int pageSize, int pageIndex, String sortBy, String searchString) {
-        String[] search = convertSearchString(searchString);
-        return entryViewRepository.getSortedAndFilteredEntries(pageSize, pageIndex, sortBy, search);
+    public Page getPage(PageRequest request) {
+        
+        if (request.searchString() == null || request.searchString().isEmpty()) {
+            int totalNumberOfRows = bookService.numberOfRows();
+            List<FlatEntryDto> entries = entryViewRepository.getSortedEntries(request);
+            return new Page(entries, request.pageIndex(), totalNumberOfRows);
+        }
+
+        return entryViewRepository.getSortedAndFilteredEntries(request);
     }
 
-    private String[] convertSearchString(String searchString) {
-        return searchString.split("\\s");
-    }
+    @Override
+    public Page getPageWithBook(long bookId, PageRequest request) {
+        int totalNumberOfRows = bookService.numberOfRows();
+        int rowNum = entryViewRepository.findRow(bookId, request);
+        int pageIndex = (rowNum - 1) / request.pageSize();
 
+        List<FlatEntryDto> entries = entryViewRepository.getSortedEntries(new PageRequest(pageIndex, request.pageSize(), request.searchString(), request.sortBy(), request.sortDir(), request.caseInsensitive()));
+        return new Page(entries, pageIndex, totalNumberOfRows);
+    }
 
     @Override
     public List<FlatEntryDto> getAllFlatEntryDtos() {

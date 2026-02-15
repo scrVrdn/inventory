@@ -7,9 +7,13 @@ import org.springframework.stereotype.Controller;
 
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Page;
+import io.github.scrvrdn.inventory.dto.PageRequest;
 import io.github.scrvrdn.inventory.services.facade.EntryService;
 import io.github.scrvrdn.inventory.controls.DetailsPane;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -24,11 +28,13 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TableColumn.SortType;
+import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
 
 
 @Controller
 public class MainController {
+    private static final int SEARCH_DELAY = 600;
 
     private final EntryService entryService;
     
@@ -50,8 +56,12 @@ public class MainController {
     @FXML private ComboBox<Integer> itemsPerPageComboBox; 
     private IntegerProperty itemsPerPage = new SimpleIntegerProperty();
 
+    @FXML private TextField searchField;
+    private Timeline searchDelay;
+
     private String currentFilter;
     private String sortBy;
+    private String sortDir;
 
     @FXML private Button firstPage;
     @FXML private Button fastBack;
@@ -63,7 +73,6 @@ public class MainController {
     @FXML private Label totalPageCountLabel;
 
     private DetailsPane detailsPane;
-    
     
     private int totalNumberOfRows;
     private int currentPageIndex = 0;
@@ -78,12 +87,13 @@ public class MainController {
 
     @FXML
     private void initialize() {
-        createTable();
+        
         detailsPane.setSaveCallback(this::handleSave);
         setupItemsPerPageCombobox();        
         setupCurrentPageField();
+        setupSearchField();
         calculateTotalPageCount();
-        updateTableViewPage();
+        createTable();
     }
 
     private void createTable() {
@@ -96,6 +106,7 @@ public class MainController {
         shelfMark.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().shelfMark()));
 
         table.setItems(entryRows);
+        table.setPlaceholder(new Label("No entries"));
         
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
@@ -109,31 +120,69 @@ public class MainController {
         });
 
         table.setSortPolicy(table -> {
-            ObservableList<TableColumn<FlatEntryDto, ?>> sortOrder = table.getSortOrder();
-            if (!sortOrder.isEmpty()) {
-                TableColumn<FlatEntryDto, ?> primaryCol = sortOrder.get(0);
-                TableColumn.SortType sortType = primaryCol.getSortType();
 
-                sortBy = sortType == SortType.ASCENDING ? primaryCol.getId() : primaryCol.getId() + "DESC";
-            
+            if (!table.getSortOrder().isEmpty()) {
+                TableColumn<FlatEntryDto, ?> col = table.getSortOrder().get(0);
+                String newSortBy = col.getId();
+                String newSortDir = col.getSortType() == SortType.ASCENDING ? "ASC" : "DESC";
+
+                if (newSortBy.equals(sortBy) && newSortDir.equals(sortDir)) {
+                    return true;
+                } else {
+                    sortBy = newSortBy;
+                    sortDir = newSortDir;
+                }
             }
             
-            getEntries().thenAccept(data -> {
-                entryRows.setAll(data);
-                table.setItems(entryRows);
-            });
-            
-
+            goToFirstPage();
             return true;
         });
+
+        
     }
 
     private CompletableFuture<ObservableList<FlatEntryDto>> getEntries() {
+        System.out.println("getting entries");
         return CompletableFuture.supplyAsync(() -> {
-            Page page = entryService.getSortedAndFilteredEntries(itemsPerPage.intValue(), currentPageIndex, sortBy, currentFilter);
-            totalNumberOfRows = page.totalNumberOfRows();
-            return page.entries();
+            try {
+                PageRequest request = new PageRequest(currentPageIndex, itemsPerPage.get(), currentFilter, sortBy, sortDir, isCaseInsensitiveSort());
+                Page page = entryService.getPage(request);
+                currentPageIndex = page.pageIndex();
+                totalNumberOfRows = page.totalNumberOfRows();
+                updateTotalPageCount();
+                
+                return page.entries();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+            
         }).thenApply(FXCollections::observableArrayList);
+    }
+
+    private CompletableFuture<ObservableList<FlatEntryDto>> getEntriesAfterUpdate(long bookId) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                PageRequest request = new PageRequest(currentPageIndex, itemsPerPage.get(), currentFilter, sortBy, sortDir, isCaseInsensitiveSort());
+                Page page = entryService.getPageWithBook(bookId, request);
+                currentPageIndex = page.pageIndex();
+                totalNumberOfRows = page.totalNumberOfRows();
+                updateTotalPageCount();
+                
+                return page.entries();
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+            
+        }).thenApply(FXCollections::observableArrayList);
+    }
+
+    private boolean isCaseInsensitiveSort() {
+        if (sortBy == null) return true;
+        if (sortBy.equals(id.getId()) || sortBy.equals(year.getId())) return false;
+        return true;
     }
 
     private void setupItemsPerPageCombobox() {
@@ -161,8 +210,32 @@ public class MainController {
         currentPageField.setTextFormatter(formatter);
     }
 
+    private void setupSearchField() {
+        searchDelay = new Timeline();
+        searchDelay.setCycleCount(1);
+
+        searchField.textProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue == null || newValue.isBlank()) {
+                searchDelay.stop();
+                currentFilter = null;
+                goToFirstPage();
+                return;
+            }
+
+            searchDelay.stop();
+            searchDelay.getKeyFrames().setAll(new KeyFrame(Duration.millis(SEARCH_DELAY), event -> {
+                    currentFilter = searchField.getText();
+                    goToFirstPage();
+                })
+            );
+
+            searchDelay.play();
+        });
+    }
+
     private void refreshTable() {
         currentPageField.setText(String.valueOf(currentPageIndex + 1));
+        totalPageCountLabel.setText(String.valueOf(totalPageCount));
         validatePageButtons();
     }
 
@@ -173,10 +246,24 @@ public class MainController {
     }
 
     private void updateTableViewPage() {
-        int fromRow = currentPageIndex * itemsPerPage.intValue();
-        currentPageField.setText(String.valueOf(currentPageIndex + 1));
-        validatePageButtons();
-        entryRows.setAll(entryService.getFlatEntryDtos(itemsPerPage.intValue(), fromRow));
+         getEntries().thenAccept(data -> Platform.runLater(() -> {
+                entryRows.setAll(data);
+                refreshTable();
+        }));
+    }
+
+    private void updateTableViewPage(long bookId) {
+        getEntriesAfterUpdate(bookId).thenAccept(data -> Platform.runLater(() -> {
+            entryRows.setAll(data);
+            selectByBookId(bookId);
+            refreshTable();
+        }));
+    }
+
+    private void selectByBookId(long bookId) {
+        FlatEntryDto entry = entryRows.stream().filter(r -> r.bookId() == bookId).findFirst().orElse(null);
+        table.getSelectionModel().select(entry);
+        table.scrollTo(entry);
     }
 
     @FXML
@@ -227,39 +314,31 @@ public class MainController {
         updateTableViewPage();
     }
 
-    // private ObservableList<FlatEntryDto> getEntries() {
-    //     ObservableList<FlatEntryDto> rows = FXCollections.observableArrayList();
-    //     rows.addAll(entryService.getAllFlatEntryDtos());
-    //     return rows;
-    // }
-
     @FXML
     private void handleAddNewEntryButton() {
         boolean newEntryOnNewPage = lastPageIsFull();
         boolean currentPageIsNotLastPage = !onLastPage();
         
         try {
-            Optional<FlatEntryDto> entry = entryService.createEmptyEntry();
-            if (entry.isPresent()) {
-                
+           FlatEntryDto entry = entryService.createEmptyEntry().orElseThrow();
                 calculateTotalPageCount();
-            
+
                 if (newEntryOnNewPage) {
                     entryRows.clear();
                     currentPageIndex = totalPageCount - 1;
-                    entryRows.add(entry.get());
+                    entryRows.add(entry);
                 } else {
                     if (currentPageIsNotLastPage) {
                         goToLastPage();
                     } else {
-                        entryRows.add(entry.get());
+                        entryRows.add(entry);
                     }
                 }
                 
                 table.getSelectionModel().selectLast();
                 table.scrollTo(table.getSelectionModel().getSelectedIndex());
+               
                 refreshTable();
-            }
 
         } catch (Exception e) {
             System.err.println("Failed to add Item");
@@ -317,7 +396,10 @@ public class MainController {
 
                 } else {
                     entryRows.remove(selected);
-                    if (!toDeleteIsOnLastPage) fillTable();
+                    if (!toDeleteIsOnLastPage) {
+                        // fillTable();
+                        updateTableViewPage();
+                    }
                 }
                 
                 int targetIdx = selectedIdx < table.getItems().size() ? selectedIdx : Math.max(0, selectedIdx - 1);
@@ -337,16 +419,24 @@ public class MainController {
 
     private void fillTable() {
         FlatEntryDto lastEntry = entryRows.getLast();
+        // Object sortKey = lastEntry.bookTitle();
+        // if (!table.getSortOrder().isEmpty()) {
+        //     TableColumn<FlatEntryDto, ?> col = table.getSortOrder().get(0);
+        //     sortKey = col.getCellData(entryRows.size() - 1);
+        // }
+       
         Optional<FlatEntryDto> nextEntry = entryService.getNextFlatEntryDtoAfterBookId(lastEntry.bookId());
         if (nextEntry.isPresent()) entryRows.addLast(nextEntry.get());
     }
 
     @FXML
     private void handleItemsPerPageSelection() {
-        currentPageIndex = 0;
-        totalPageCount = (totalNumberOfRows + itemsPerPage.intValue() - 1) / itemsPerPage.intValue();
-        totalPageCountLabel.setText("/ " + String.valueOf(totalPageCount));
-        updateTableViewPage();
+        updateTotalPageCount();
+        goToFirstPage();
+    }
+
+    private void updateTotalPageCount() {
+         totalPageCount = (totalNumberOfRows + itemsPerPage.intValue() - 1) / itemsPerPage.intValue();
     }
 
     @FXML
@@ -357,8 +447,6 @@ public class MainController {
 
     private void handleSave(FullEntryDto entry) {
         FlatEntryDto updatedEntry = entryService.update(entry);
-        int idx = table.getSelectionModel().getSelectedIndex();
-        table.getItems().set(idx, updatedEntry);
-        table.getSelectionModel().select(idx);
+        updateTableViewPage(entry.getBook().getId());      
     }
 }

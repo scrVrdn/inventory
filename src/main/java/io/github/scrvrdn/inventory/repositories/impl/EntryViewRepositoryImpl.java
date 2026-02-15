@@ -3,14 +3,15 @@ package io.github.scrvrdn.inventory.repositories.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.stereotype.Repository;
 
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Page;
+import io.github.scrvrdn.inventory.dto.PageRequest;
 import io.github.scrvrdn.inventory.mappers.EntryDtoExtractor;
 import io.github.scrvrdn.inventory.mappers.EntryDtoListExtractor;
 import io.github.scrvrdn.inventory.mappers.FlatEntryDtoRowMapper;
@@ -127,7 +128,7 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
         return jdbcTemplate.query(query, flatEntryDtoRowMapper, bookId).stream().findFirst();
     }
 
-    public List<FlatEntryDto> getFlatEntryDtos(int numberOfEntries, int fromRow) {
+    public List<FlatEntryDto> getFlatEntryDtos(int pageSize, int fromRow) {
         String query = """
                 SELECT
                     b."id", b."title", b."year", b."shelf_mark",
@@ -153,12 +154,65 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
                 OFFSET ?;
                 """;
 
-        return jdbcTemplate.query(query, flatEntryDtoRowMapper, numberOfEntries, fromRow);
+        return jdbcTemplate.query(query, flatEntryDtoRowMapper, pageSize, fromRow);
+    }
+    
+    @Override
+    public Page getSortedAndFilteredEntries(PageRequest request) {
+
+        List<Long> filteredIds = getFilteredEntries(request.searchString().split(" "));
+        int totalNumberOfRows = filteredIds.size();
+
+        List<FlatEntryDto> entries = getSortedEntries(filteredIds, request);
+        return new Page(entries, request.pageIndex(), totalNumberOfRows);
     }
 
-    @Override
-    public Page getSortedAndFilteredEntries(int pageSize, int pageIndex, String sortBy, String[] searchString) {
-        String querySELECT = """
+
+    private List<Long> getFilteredEntries(String[] searchString) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT b."id"
+                FROM "books" b
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+                LEFT JOIN "published" ON b."id" = "published"."book_id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                WHERE 1 = 1""");
+
+        List<Object> params = new ArrayList<>();
+
+        if (searchString != null) {
+            for (String str : searchString) {
+                sql.append("""
+                         AND (
+                        b."title" LIKE ?
+                        OR b."year" LIKE ?
+                        OR b."shelf_mark" LIKE ?
+                        OR b."isbn10" LIKE ?
+                        OR b."isbn13" LIKE ?
+                        OR p."last_name" LIKE ?
+                        OR p."first_names" LIKE ?
+                        OR "publishers"."name" LIKE ?
+                        OR "publishers"."location" LIKE ?
+                        )""");
+                
+                str = "%" + str + "%";
+                int n = 9;
+                while (n > 0) {
+                    params.add(str);
+                    n--;
+                }
+            }
+        }
+            sql.append(" GROUP BY b.\"id\";");
+
+            return jdbcTemplate.queryForList(sql.toString(), Long.class, params.toArray());
+    }
+
+    private List<FlatEntryDto> getSortedEntries(List<Long> filteredIds, PageRequest request) {
+        String placeHolders = filteredIds.stream().map(id -> "?").collect(Collectors.joining(", "));
+        String orderBy = buildOrderBy(request);
+
+        String sql = String.format("""
                 SELECT
                     b."id", b."title" AS "title", b."year" AS "year", b."shelf_mark" AS "shelf_mark",
                     GROUP_CONCAT(
@@ -172,122 +226,95 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
                         THEN NULL
                         ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
                     END AS "publisher"
-                """;
-                        
-        String queryFROM = """
-                FROM "books" b
+                    FROM "books" b
                 LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
                 LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
                 LEFT JOIN "published" ON b."id" = "published"."book_id"
                 LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                GROUP by b."id"
-                """;
-       
-        List<Object> params = new ArrayList<>();
+                WHERE b."id" IN (%s)
+                GROUP BY b."id"
+                ORDER BY %s, b."id" %s
+                LIMIT %d OFFSET %d;
+                """, placeHolders, orderBy, request.sortDir(), request.pageSize(), request.pageSize() * request.pageIndex());
 
-        StringBuilder filterSql = new StringBuilder("HAVING 1 = 1");
-        if (searchString != null) {
-            for (String str : searchString) {
-                filterSql.append("""
-                             AND (
-                                "title" LIKE ?
-                                OR "year" LIKE ?
-                                OR "shelf_mark" LIKE ?
-                                OR "authors" LIKE ?
-                                OR "editors" LIKE ?
-                                OR "publisher" LIKE ?
-                                OR "isbn10" LIKE ?
-                                OR "isbn13" LIKE ?
-                            )""");
-
-                            str = "%" + str + "%";
-                            int n = 8;
-                            while (n > 0) {
-                                params.add(str);
-                                n--;
-                            }
-            }
-        }
-
-        // StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) ");
-        // countQuery.append(queryFROM);
-        // countQuery.append(queryFilter);
-        // countQuery.append(";");
-
-        // System.out.println(countQuery.toString());
-        int totalNumberOfRows = getNumberOfRowsAfterFiltering(filterSql, params);
-        // int totalNumberOfRows = jdbcTemplate.queryForObject(countQuery.toString(), Integer.class, params.toArray());
-        //int totalNumberOfRows = 10;
-        sortBy = (sortBy != null) ? sortBy : "b.\"id\"";
-        StringBuilder dataSql = new StringBuilder(querySELECT)
-                                    .append(queryFROM)
-                                    .append(filterSql)
-                                    .append(" ORDER BY ")
-                                    .append(sortBy)
-                                    .append("\nLIMIT ? OFFSET ?;\n");
-        
-        params.add(pageSize);
-        params.add(pageIndex * pageSize);
-        
-        System.out.println(dataSql.toString());
-        List<FlatEntryDto> data = jdbcTemplate.query(dataSql.toString(), flatEntryDtoRowMapper, params.toArray());
-
-        return new Page(data, pageIndex, pageSize, totalNumberOfRows);
+        return jdbcTemplate.query(sql, flatEntryDtoRowMapper, filteredIds.toArray());
     }
 
-    
-    private int getNumberOfRowsAfterFiltering(StringBuilder filterSql, List<Object> params) {
-        String querySql = """
-                SELECT COUNT(*),
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; '
-                    ) AS "authors",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; '
-                    ) AS "editors",
-                    CASE
-                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
-                        THEN NULL
-                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
-                    END AS "publisher"
+    public List<FlatEntryDto> getSortedEntries(PageRequest request) {
+        String orderBy = buildOrderBy(request);
+
+        StringBuilder sql = new StringBuilder("""
+            SELECT
+                b."id", b."title" AS "title", b."year" AS "year", b."shelf_mark" AS "shelf_mark",
+                GROUP_CONCAT(
+                    CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                ) AS "authors",
+                GROUP_CONCAT(
+                    CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                ) AS "editors",
+                CASE
+                    WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                    THEN NULL
+                    ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                END AS "publisher"
                 FROM "books" b
-                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
-                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
-                LEFT JOIN "published" ON b."id" = "published"."book_id"
-                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                GROUP by b."id"
-        """;
-
-        StringBuilder query = new StringBuilder("""
-        SELECT COUNT(*),
-            GROUP_CONCAT(
-                CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; '
-            ) AS "authors",
-            GROUP_CONCAT(
-                CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; '
-            ) AS "editors",
-            CASE
-                WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
-                THEN NULL
-                ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
-            END AS "publisher"
-        FROM "books" b
-        LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
-        LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
-        LEFT JOIN "published" ON b."id" = "published"."book_id"
-        LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-        GROUP by b."id"
-        """);
-                        
-                        
+            LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+            LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+            LEFT JOIN "published" ON b."id" = "published"."book_id"
+            LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+            GROUP BY b."id"
+        """)
+            .append("ORDER BY " + orderBy)
+            .append(", b.\"id\" " + request.sortDir())
+            .append("\nLIMIT " + request.pageSize())
+            .append("\nOFFSET " + (request.pageIndex() * request.pageSize()) + ";");
         
-        query.append(filterSql).append(";");
+        return jdbcTemplate.query(sql.toString(), flatEntryDtoRowMapper);
+    }
 
-        return jdbcTemplate.queryForObject(query.toString(),
-        (rs, rowNum) -> {
-            return rs.getInt("COUNT(*)");
-        },
-        params.toArray());
+    @Override
+    public int findRow(long bookId, PageRequest request) {
+        String orderBy = buildOrderBy(request);
+        System.out.println(orderBy);
+        StringBuilder sql = new StringBuilder("""
+                SELECT "row_number" FROM (
+                    SELECT ROW_NUMBER() OVER(
+                        ORDER BY 
+                """);
+                        
+            sql.append(orderBy)
+                .append(", \"id\" " + request.sortDir())
+                .append("""
+                    ) AS "row_number", "id" FROM (
+                        SELECT
+                            b."id" AS "id", b."title" AS "title", b."year" AS "year", b."shelf_mark" AS "shelf_mark",
+                            GROUP_CONCAT(
+                                    CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                                ) AS "authors",
+                            GROUP_CONCAT(
+                                CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                            ) AS "editors",
+                            CASE
+                                WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                                THEN NULL
+                                ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                            END AS "publisher"
+                            FROM "books" b
+                            LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                            LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+                            LEFT JOIN "published" ON b."id" = "published"."book_id"
+                            LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                            GROUP BY b."id"
+                        ) grouped
+                ) AS t
+                WHERE t."id" = ?;
+                """);
+
+        return jdbcTemplate.queryForObject(sql.toString(), Integer.class, bookId);
+    }
+
+    private String buildOrderBy(PageRequest request) {
+        return request.caseInsensitive() ? request.sortBy() + " COLLATE NOCASE " + request.sortDir(): request.sortBy() + " " + request.sortDir();
     }
 
     @Override

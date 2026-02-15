@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.mockito.ArgumentMatcher;
+
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Person;
 import io.github.scrvrdn.inventory.dto.Publisher;
@@ -135,5 +137,31 @@ public final class TestDataUtil {
                             .collect(Collectors.joining("; ")),
                         entry.getPublisher().toString()
                     );
+    }
+
+    
+
+    public static class SqlMatcher implements ArgumentMatcher<String> {
+        private final String expectedSql;
+
+        public SqlMatcher(String expectedString) {
+            this.expectedSql = normalizeSql(expectedString);
+        }
+
+        private static String normalizeSql(String sql) {
+            return sql.replaceAll("\\s+", " ").trim();
+        }
+
+        @Override
+        public boolean matches(String actualSql) {
+            String normalized = normalizeSql(actualSql);
+            return normalized.equals(expectedSql);
+        }
+
+        @Override
+        public String toString() {
+            return "matchesSql(<" + expectedSql + ">)";
+        }
+
     }
 }

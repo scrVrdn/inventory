@@ -35,7 +35,7 @@
                                 <ToolBar>
                                     <Button text="New Entry" fx:id="addNewEntryButton" onAction="#handleAddNewEntryButton"/>
                                     <Button text="Delete Entry" fx:id="deleteEntryButton" onAction="#handleDeleteEntryButton"/>
-                                    
+                                    <TextField fx:id="searchField"/>
                                 </ToolBar>
                                 <HBox alignment="CENTER_RIGHT">
                                     <Label fx:id="itemsPerPageLabel" text="items per page:"/>
@@ -43,13 +43,13 @@
                                 </HBox>
                                 <TableView fx:id="table" VBox.vgrow="ALWAYS">
                                     <columns>
-                                        <TableColumn fx:id="id" id="book_id" text="ID" styleClass="table-column"/>
-                                        <TableColumn fx:id="authors" id="authors" text="Author" styleClass="table-column"/>
-                                        <TableColumn fx:id="title" id="title" text="Title" styleClass="table-column"/>
-                                        <TableColumn fx:id="editors" id="editors" text="Editor" styleClass="table-column"/>
-                                        <TableColumn fx:id="publisher" id="publisher" text="Publisher" styleClass="table-column"/>
-                                        <TableColumn fx:id="year" id="year" text="Year" styleClass="table-column"/>
-                                        <TableColumn fx:id="shelfMark" id="shelf_mark" text="Shelf Mark" styleClass="table-column"/>
+                                        <TableColumn fx:id="id" id='b."id"' text="ID" styleClass="table-column"/>
+                                        <TableColumn fx:id="authors" id='"authors"' text="Author" styleClass="table-column"/>
+                                        <TableColumn fx:id="title" id='"title"' text="Title" styleClass="table-column"/>
+                                        <TableColumn fx:id="editors" id='"editors"' text="Editor" styleClass="table-column"/>
+                                        <TableColumn fx:id="publisher" id='"publisher"' text="Publisher" styleClass="table-column"/>
+                                        <TableColumn fx:id="year" id='"year"' text="Year" styleClass="table-column"/>
+                                        <TableColumn fx:id="shelfMark" id='"shelf_mark"' text="Shelf Mark" styleClass="table-column"/>
                                     </columns>
                                     <columnResizePolicy>
                                         <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

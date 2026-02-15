@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Page;
+import io.github.scrvrdn.inventory.dto.PageRequest;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 
 
@@ -21,9 +22,13 @@ public interface EntryService {
 
     Optional<FlatEntryDto> getNextFlatEntryDtoAfterBookId(long bookId);
 
-    List<FlatEntryDto> getFlatEntryDtos(int numberOfEntries, int fromRow);
+    List<FlatEntryDto> getFlatEntryDtos(int pageSize, int fromRow);
 
-    Page getSortedAndFilteredEntries(int numberOfEntries, int pageIndex, String sortBy, String searchString);
+    //Page getSortedAndFilteredEntries(int pageSize, int pageIndex, String sortBy, String searchString);
+
+    Page getPage(PageRequest request);
+
+    Page getPageWithBook(long bookId, PageRequest request);
 
     List<FlatEntryDto> getAllFlatEntryDtos();
 
