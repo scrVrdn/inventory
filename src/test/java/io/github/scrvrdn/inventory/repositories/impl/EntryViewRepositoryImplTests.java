@@ -1,31 +1,21 @@
 package io.github.scrvrdn.inventory.repositories.impl;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.SingleColumnRowMapper;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
-import io.github.scrvrdn.inventory.dto.Page;
 import io.github.scrvrdn.inventory.dto.PageRequest;
 import io.github.scrvrdn.inventory.mappers.EntryDtoExtractor;
 import io.github.scrvrdn.inventory.mappers.EntryDtoListExtractor;
@@ -191,74 +181,73 @@ public class EntryViewRepositoryImplTests {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testThatFilterAndSortGeneratesCorrectSqlForData() {
-        String expectedDataSql = """
-                SELECT
-                    b."id", b."title" AS "title", b."year" AS "year", b."shelf_mark" AS "shelf_mark",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
-                    ) AS "authors",
-                    GROUP_CONCAT(
-                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
-                    ) AS "editors",
-                    CASE
-                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
-                        THEN NULL
-                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
-                    END AS "publisher"
-                FROM "books" b
-                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
-                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
-                LEFT JOIN "published" ON b."id" = "published"."book_id"
-                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                GROUP by b."id"
-                HAVING 1 = 1 AND (
-                    "title" LIKE ?
-                    OR "year" LIKE ?
-                    OR "shelf_mark" LIKE ?
-                    OR "authors" LIKE ?
-                    OR "editors" LIKE ?
-                    OR "publisher" LIKE ?
-                    OR "isbn10" LIKE ?
-                    OR "isbn13" LIKE ?
-                ) AND (
-                    "title" LIKE ?
-                    OR "year" LIKE ?
-                    OR "shelf_mark" LIKE ?
-                    OR "authors" LIKE ?
-                    OR "editors" LIKE ?
-                    OR "publisher" LIKE ?
-                    OR "isbn10" LIKE ?
-                    OR "isbn13" LIKE ?
-                ) ORDER BY "authors"
-                \nLIMIT ? OFFSET ?;
-                """;
-        
-        int pageSize = 10;
+    public void testThatGetSortedEntriesGeneratesCorrectSql() {
+        String expectedSql = """
+            SELECT
+                b."id", b."title" AS "title", b."year" AS "year", b."shelf_mark" AS "shelf_mark",
+                GROUP_CONCAT(
+                    CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                ) AS "authors",
+                GROUP_CONCAT(
+                    CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                ) AS "editors",
+                CASE
+                    WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                    THEN NULL
+                    ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                END AS "publisher"
+            FROM "books" b
+            LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+            LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+            LEFT JOIN "published" ON b."id" = "published"."book_id"
+            LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+            GROUP BY b."id"
+            ORDER BY "authors" COLLATE NOCASE DESC, b."id" DESC
+            LIMIT ? OFFSET ?;
+        """;
+
         int pageIndex = 0;
-       
-        Object[] params1 = {"%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%",
-                            "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%"};
+        int pageSize = 10;
+        PageRequest request = new PageRequest(pageIndex, pageSize, null, "\"authors\"", "DESC", true);
+        underTest.getSortedEntries(request);
 
-        when(jdbcTemplate.queryForObject(Mockito.anyString(), any(RowMapper.class), eq(params1))).thenReturn(1);
-
-        Object[] params2 = {"%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%",
-                            "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%",
-                            pageSize, (pageIndex * pageSize)    
-                        };
-
-        
-        String sortBy = "\"authors\"";
-        PageRequest request = new PageRequest(pageIndex, pageSize, "edgar poe", sortBy, "ASC", true);
-        underTest.getSortedAndFilteredEntries(request);
-        verify(jdbcTemplate).query(expectedDataSql, flatEntryDtoRowMapper, params2);
-        
+        verify(jdbcTemplate).query(
+            argThat(TestDataUtil.sqlEquals(expectedSql)),
+            eq(flatEntryDtoRowMapper),
+            eq(request.pageSize()),
+            eq(request.pageIndex() * request.pageSize())
+        );
+            
     }
 
     @Test
-    public void testThatFilterAndSortGeneratesCorrectSqlForFiltering() {
-        String expectedSql = """
+    public void testThatFilterAndSortGeneratesCorrectSql() {
+        String filterSql = getFilteredEntriesSql();
+        String sortSql = getSortedEntriesSql();
+        int pageSize = 10;
+        int pageIndex = 0;
+       
+        Object[] params = {"%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%",
+                            "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%"};
+
+        List<Long> filteredIds = List.of(1L, 2L);
+        when(jdbcTemplate.queryForList(anyString(), eq(Long.class), eq(params))).thenReturn(filteredIds);
+        
+        PageRequest request = new PageRequest(pageIndex, pageSize, "edgar poe", "\"authors\"", "ASC", true);
+        Object[] params2 = {1L, 2L, request.pageSize(), request.pageIndex() * request.pageSize()};
+
+        underTest.getSortedAndFilteredEntries(request);
+        
+        verify(jdbcTemplate).queryForList(argThat(TestDataUtil.sqlEquals(filterSql)), eq(Long.class), eq(params));
+        verify(jdbcTemplate).query(
+            argThat(TestDataUtil.sqlEquals(sortSql)),
+            eq(flatEntryDtoRowMapper),
+            eq(params2)
+        );
+    }
+
+    private String getFilteredEntriesSql() {
+        String sql = """
                 SELECT b."id"
                 FROM "books" b
                 LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
@@ -285,17 +274,38 @@ public class EntryViewRepositoryImplTests {
                     OR p."first_names" LIKE ?
                     OR "publishers"."name" LIKE ?
                     OR "publishers"."location" LIKE ?
-                ) GROUP by b."id";
+                ) GROUP BY b.\"id\";
+                """;
+        return sql;
+    }
+
+    private String getSortedEntriesSql() {
+        String sql = """
+                SELECT
+                    b."id", b."title" AS "title", b."year" AS "year", b."shelf_mark" AS "shelf_mark",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "authors",
+                    GROUP_CONCAT(
+                        CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                    ) AS "editors",
+                    CASE
+                        WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                        THEN NULL
+                        ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                    END AS "publisher"
+                FROM "books" b
+                LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+                LEFT JOIN "published" ON b."id" = "published"."book_id"
+                LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                WHERE b."id" IN (?, ?)
+                GROUP BY b."id"
+                ORDER BY "authors" COLLATE NOCASE ASC, b."id" ASC
+                LIMIT ? OFFSET ?;
                 """;
 
-        Object[] params = {"%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%", "%edgar%",
-                            "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%", "%poe%"};
-        
-        lenient().when(jdbcTemplate.queryForList(expectedSql, Long.class, params)).thenReturn(List.of(1L));
-        PageRequest request = new PageRequest(0, 10, "edgar poe", "\"authors\"", "ASC", true);
-        Page result = underTest.getSortedAndFilteredEntries(request);
-        //assertThat(result.totalNumberOfRows()).isEqualTo(1);
-        verify(jdbcTemplate).queryForList(argThat(new TestDataUtil.SqlMatcher(expectedSql)), eq(Long.class), eq(params));
+        return sql;
     }
 
     @Test

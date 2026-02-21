@@ -141,27 +141,24 @@ public final class TestDataUtil {
 
     
 
-    public static class SqlMatcher implements ArgumentMatcher<String> {
-        private final String expectedSql;
-
-        public SqlMatcher(String expectedString) {
-            this.expectedSql = normalizeSql(expectedString);
-        }
-
-        private static String normalizeSql(String sql) {
-            return sql.replaceAll("\\s+", " ").trim();
-        }
-
+    public static ArgumentMatcher<String> sqlEquals(String expectedSql) {
+        return new ArgumentMatcher<String>() {
         @Override
         public boolean matches(String actualSql) {
-            String normalized = normalizeSql(actualSql);
-            return normalized.equals(expectedSql);
+            String expectedNormalized = normalizeSql(expectedSql);
+            String actualNormalized = normalizeSql(actualSql);
+            return actualNormalized.equals(expectedNormalized);
         }
 
         @Override
         public String toString() {
-            return "matchesSql(<" + expectedSql + ">)";
+            return "matchesSql(<" + normalizeSql(expectedSql) + ">)";
         }
 
+        private String normalizeSql(String sql) {
+            return sql.replaceAll("\\s+", " ").trim();
+        }
+
+        };
     }
 }

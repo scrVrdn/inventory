@@ -31,13 +31,11 @@ import javafx.scene.control.TableColumn.SortType;
 import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
 
-
 @Controller
 public class MainController {
     private static final int SEARCH_DELAY = 600;
 
-    private final EntryService entryService;
-    
+    private final EntryService entryService;    
 
     @FXML private TableView<FlatEntryDto> table;
 
@@ -320,24 +318,25 @@ public class MainController {
         
         try {
            FlatEntryDto entry = entryService.createEmptyEntry().orElseThrow();
-                calculateTotalPageCount();
+           updateTableViewPage(entry.bookId());
+                // calculateTotalPageCount();
 
-                if (newEntryOnNewPage) {
-                    entryRows.clear();
-                    currentPageIndex = totalPageCount - 1;
-                    entryRows.add(entry);
-                } else {
-                    if (currentPageIsNotLastPage) {
-                        goToLastPage();
-                    } else {
-                        entryRows.add(entry);
-                    }
-                }
+                // if (newEntryOnNewPage) {
+                //     entryRows.clear();
+                //     currentPageIndex = totalPageCount - 1;
+                //     entryRows.add(entry);
+                // } else {
+                //     if (currentPageIsNotLastPage) {
+                //         goToLastPage();
+                //     } else {
+                //         entryRows.add(entry);
+                //     }
+                // }
                 
-                table.getSelectionModel().selectLast();
-                table.scrollTo(table.getSelectionModel().getSelectedIndex());
+                // table.getSelectionModel().selectLast();
+                // table.scrollTo(table.getSelectionModel().getSelectedIndex());
                
-                refreshTable();
+                // refreshTable();
 
         } catch (Exception e) {
             System.err.println("Failed to add Item");

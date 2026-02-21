@@ -24,8 +24,6 @@ public interface EntryService {
 
     List<FlatEntryDto> getFlatEntryDtos(int pageSize, int fromRow);
 
-    //Page getSortedAndFilteredEntries(int pageSize, int pageIndex, String sortBy, String searchString);
-
     Page getPage(PageRequest request);
 
     Page getPageWithBook(long bookId, PageRequest request);

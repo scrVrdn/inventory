@@ -3,6 +3,7 @@ package io.github.scrvrdn.inventory.services.cleanup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @SpringBootTest
+@ActiveProfiles("test")
 public class PublisherCleanupServiceIntegrationTests {
     private final JdbcTemplate jdbcTemplate;
 

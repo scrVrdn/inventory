@@ -159,10 +159,8 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
     
     @Override
     public Page getSortedAndFilteredEntries(PageRequest request) {
-
         List<Long> filteredIds = getFilteredEntries(request.searchString().split(" "));
         int totalNumberOfRows = filteredIds.size();
-
         List<FlatEntryDto> entries = getSortedEntries(filteredIds, request);
         return new Page(entries, request.pageIndex(), totalNumberOfRows);
     }
@@ -203,16 +201,17 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
                 }
             }
         }
-            sql.append(" GROUP BY b.\"id\";");
-
-            return jdbcTemplate.queryForList(sql.toString(), Long.class, params.toArray());
+        sql.append(" GROUP BY b.\"id\";");
+        
+        return jdbcTemplate.queryForList(sql.toString(), Long.class, params.toArray());
     }
 
     private List<FlatEntryDto> getSortedEntries(List<Long> filteredIds, PageRequest request) {
         String placeHolders = filteredIds.stream().map(id -> "?").collect(Collectors.joining(", "));
         String orderBy = buildOrderBy(request);
 
-        String sql = String.format("""
+        StringBuilder sql = new StringBuilder(
+            """
                 SELECT
                     b."id", b."title" AS "title", b."year" AS "year", b."shelf_mark" AS "shelf_mark",
                     GROUP_CONCAT(
@@ -226,18 +225,29 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
                         THEN NULL
                         ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
                     END AS "publisher"
-                    FROM "books" b
+                FROM "books" b
                 LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
                 LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
                 LEFT JOIN "published" ON b."id" = "published"."book_id"
                 LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                WHERE b."id" IN (%s)
-                GROUP BY b."id"
-                ORDER BY %s, b."id" %s
-                LIMIT %d OFFSET %d;
-                """, placeHolders, orderBy, request.sortDir(), request.pageSize(), request.pageSize() * request.pageIndex());
+                WHERE b."id" IN ("""
+            );
+        sql.append(placeHolders + ")")
+            .append("\nGROUP BY b.\"id\"")
+            .append("\nORDER BY " + orderBy)
+            .append(", b.\"id\" " + request.sortDir())
+            .append("\nLIMIT ? OFFSET ?;");
+        
+        Object[] params = new Object[filteredIds.size() + 2];
+        System.arraycopy(filteredIds.toArray(), 0, params, 0, filteredIds.size());
+        params[filteredIds.size()] = request.pageSize();
+        params[filteredIds.size() + 1] = request.pageIndex() * request.pageSize();
 
-        return jdbcTemplate.query(sql, flatEntryDtoRowMapper, filteredIds.toArray());
+        return jdbcTemplate.query(
+            sql.toString(),
+            flatEntryDtoRowMapper,
+            params
+        );
     }
 
     public List<FlatEntryDto> getSortedEntries(PageRequest request) {
@@ -266,10 +276,9 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
         """)
             .append("ORDER BY " + orderBy)
             .append(", b.\"id\" " + request.sortDir())
-            .append("\nLIMIT " + request.pageSize())
-            .append("\nOFFSET " + (request.pageIndex() * request.pageSize()) + ";");
+            .append("\nLIMIT ? OFFSET ?;");
         
-        return jdbcTemplate.query(sql.toString(), flatEntryDtoRowMapper);
+        return jdbcTemplate.query(sql.toString(), flatEntryDtoRowMapper, request.pageSize(), request.pageIndex() * request.pageSize());
     }
 
     @Override
