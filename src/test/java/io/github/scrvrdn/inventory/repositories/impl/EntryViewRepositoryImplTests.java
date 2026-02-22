@@ -336,4 +336,47 @@ public class EntryViewRepositoryImplTests {
 
         verify(jdbcTemplate).query(expectedSql, flatEntryDtoRowMapper);
     }
+
+    @Test
+    public void testThatfindRowGeneratesCorrectSql() {
+        String expectedSql = """
+                SELECT "row_number" FROM (
+                    SELECT ROW_NUMBER() OVER(
+                        ORDER BY "authors" COLLATE NOCASE DESC, "id" DESC
+                    ) AS "row_number", "id" FROM (
+                        SELECT
+                            b."id" AS "id", b."title" AS "title", b."year" AS "year", b."shelf_mark" AS "shelf_mark",
+                            GROUP_CONCAT(
+                                CASE WHEN "book_person"."role" = 'AUTHOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                            ) AS "authors",
+                            GROUP_CONCAT(
+                                CASE WHEN "book_person"."role" = 'EDITOR' THEN CONCAT_WS(', ', p."last_name", p."first_names") END, '; ' ORDER BY "book_person"."order_index"
+                            ) AS "editors",
+                            CASE
+                                WHEN "publishers"."location" IS NULL AND "publishers"."name" IS NULL
+                                THEN NULL
+                                ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
+                            END AS "publisher"
+                        FROM "books" b
+                        LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                        LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+                        LEFT JOIN "published" ON b."id" = "published"."book_id"
+                        LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                        GROUP BY b."id"
+                    ) grouped
+                ) AS t
+                WHERE t."id" = ?;
+                """;
+        
+        long bookId = 1L;
+        PageRequest request = new PageRequest(0, 10, null, "\"authors\"", "DESC", true);
+        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq(bookId))).thenReturn(5);
+        underTest.findRow(bookId, request);
+
+        verify(jdbcTemplate).queryForObject(
+            argThat(TestDataUtil.sqlEquals(expectedSql)),
+            eq(Integer.class),
+            eq(bookId)
+        );
+    }
 }

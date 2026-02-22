@@ -283,7 +283,7 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
 
     @Override
     public int findRow(long bookId, PageRequest request) {
-        String orderBy = buildOrderBy(request);
+        String orderBy = !request.sortBy().equals("b.\"id\"") ? buildOrderBy(request) : null;
         
         StringBuilder sql = new StringBuilder("""
                 SELECT "row_number" FROM (
@@ -291,8 +291,8 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
                         ORDER BY 
                 """);
                         
-            sql.append(orderBy)
-                .append(", \"id\" " + request.sortDir())
+            if (orderBy != null) sql.append(orderBy +", ");
+                sql.append("\"id\" " + request.sortDir())
                 .append("""
                     ) AS "row_number", "id" FROM (
                         SELECT
@@ -308,13 +308,13 @@ public class EntryViewRepositoryImpl implements EntryViewRepository {
                                 THEN NULL
                                 ELSE CONCAT_WS(': ', "publishers"."location", "publishers"."name")
                             END AS "publisher"
-                            FROM "books" b
-                            LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
-                            LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
-                            LEFT JOIN "published" ON b."id" = "published"."book_id"
-                            LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
-                            GROUP BY b."id"
-                        ) grouped
+                        FROM "books" b
+                        LEFT JOIN "book_person" ON b."id" = "book_person"."book_id"
+                        LEFT JOIN "persons" p ON "book_person"."person_id" = p."id"
+                        LEFT JOIN "published" ON b."id" = "published"."book_id"
+                        LEFT JOIN "publishers" ON "published"."publisher_id" = "publishers"."id"
+                        GROUP BY b."id"
+                    ) grouped
                 ) AS t
                 WHERE t."id" = ?;
                 """);

@@ -95,8 +95,12 @@ public class EntryServiceImpl implements EntryService {
         int totalNumberOfRows = bookService.numberOfRows();
         int rowNum = entryViewRepository.findRow(bookId, request);
         int pageIndex = (rowNum - 1) / request.pageSize();
+        
+        if (pageIndex != request.pageIndex()) {
+            request = new PageRequest(pageIndex, request.pageSize(), request.searchString(), request.sortBy(), request.sortDir(), request.caseInsensitive());
+        }
 
-        List<FlatEntryDto> entries = entryViewRepository.getSortedEntries(new PageRequest(pageIndex, request.pageSize(), request.searchString(), request.sortBy(), request.sortDir(), request.caseInsensitive()));
+        List<FlatEntryDto> entries = entryViewRepository.getSortedEntries(request);
         return new Page(entries, pageIndex, totalNumberOfRows);
     }
 

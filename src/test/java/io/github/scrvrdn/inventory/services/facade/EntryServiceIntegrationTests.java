@@ -430,6 +430,26 @@ public class EntryServiceIntegrationTests {
     }
 
     @Test
+    public void testThatGetsPageWithBook() {
+        int n = 15;
+        List<FlatEntryDto> entries = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            FlatEntryDto entry = underTest.createEmptyEntry().orElseThrow();
+            entries.add(entry);
+        }
+
+        long bookId = 9L;
+        int pageSize = 4;
+        List<FlatEntryDto> expected = entries.subList(7, 11);
+        
+        PageRequest request = new PageRequest(0, pageSize, null, "b.\"id\"", "DESC", true);
+
+        Page result = underTest.getPageWithBook(bookId, request);
+        
+        assertThat(result.entries()).containsExactly(expected.get(3), expected.get(2), expected.get(1), expected.get(0));
+    }
+
+    @Test
     public void testThatGetsAllFLatEntryDtos() {
         FlatEntryDto emptyEntry1 = underTest.createEmptyEntry().orElseThrow();
         FullEntryDto entry1 = TestDataUtil.createTestEntry();
