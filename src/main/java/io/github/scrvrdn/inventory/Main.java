@@ -5,7 +5,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 import io.github.scrvrdn.inventory.events.StageReadyEvent;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.stage.Stage;
 
 public class Main extends Application {
@@ -26,8 +25,9 @@ public class Main extends Application {
 
     @Override
     public void stop() {
-        context.close();
-        Platform.exit();
+        if (context != null) {
+            context.close();
+        }
     }
 
 }

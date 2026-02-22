@@ -5,6 +5,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.Pagination?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SplitPane?>
@@ -22,6 +23,7 @@
         <MenuBar VBox.vgrow="NEVER">
             <menus>
                 <Menu text="File">
+                    <MenuItem text="Exit" onAction="#handleExit"/>
                 </Menu>
             </menus>
         </MenuBar>

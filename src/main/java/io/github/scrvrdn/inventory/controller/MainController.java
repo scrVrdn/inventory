@@ -9,6 +9,7 @@ import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Page;
 import io.github.scrvrdn.inventory.dto.PageRequest;
 import io.github.scrvrdn.inventory.services.facade.EntryService;
+import io.github.scrvrdn.inventory.Main;
 import io.github.scrvrdn.inventory.controls.DetailsPane;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import javafx.animation.KeyFrame;
@@ -23,6 +24,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -35,7 +37,7 @@ import javafx.util.converter.IntegerStringConverter;
 public class MainController {
     private static final int SEARCH_DELAY = 600;
 
-    private final EntryService entryService;    
+    private final EntryService entryService;
 
     @FXML private TableView<FlatEntryDto> table;
 
@@ -446,5 +448,10 @@ public class MainController {
     private void handleSave(FullEntryDto entry) {
         FlatEntryDto updatedEntry = entryService.update(entry);
         updateTableViewPage(entry.getBook().getId());      
+    }
+
+    @FXML
+    private void handleExit() {
+        Platform.exit();;
     }
 }
