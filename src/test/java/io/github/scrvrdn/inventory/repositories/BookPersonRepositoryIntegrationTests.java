@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,6 +18,7 @@ import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.Person;
 
 @SpringBootTest
+@ActiveProfiles("test")
 public class BookPersonRepositoryIntegrationTests {
     private final JdbcTemplate jdbcTemplate;
     private final BookPersonRepository underTest;
