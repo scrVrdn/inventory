@@ -8,8 +8,9 @@ import org.springframework.stereotype.Controller;
 import io.github.scrvrdn.inventory.dto.FullEntryDto;
 import io.github.scrvrdn.inventory.dto.Page;
 import io.github.scrvrdn.inventory.dto.PageRequest;
+import io.github.scrvrdn.inventory.exceptions.BookNotFoundException;
+import io.github.scrvrdn.inventory.exceptions.UniqueConstraintViolationException;
 import io.github.scrvrdn.inventory.services.facade.EntryService;
-import io.github.scrvrdn.inventory.Main;
 import io.github.scrvrdn.inventory.controls.DetailsPane;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import javafx.animation.KeyFrame;
@@ -21,14 +22,15 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TableColumn.SortType;
 import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
@@ -315,8 +317,8 @@ public class MainController {
 
     @FXML
     private void handleAddNewEntryButton() {
-        boolean newEntryOnNewPage = lastPageIsFull();
-        boolean currentPageIsNotLastPage = !onLastPage();
+        // boolean newEntryOnNewPage = lastPageIsFull();
+        // boolean currentPageIsNotLastPage = !onLastPage();
         
         try {
            FlatEntryDto entry = entryService.createEmptyEntry().orElseThrow();
@@ -341,7 +343,7 @@ public class MainController {
                 // refreshTable();
 
         } catch (Exception e) {
-            System.err.println("Failed to add Item");
+            handleRuntimeError(e);
         }
     }
 
@@ -409,8 +411,8 @@ public class MainController {
                     table.getSelectionModel().clearSelection();
                 }
 
-            } catch (Exception e) {
-                System.err.println("Failed to delete: " + selected.toString());
+            } catch (BookNotFoundException e) {
+                handleRuntimeError(e);
             }
             
             refreshTable();
@@ -446,8 +448,21 @@ public class MainController {
     }
 
     private void handleSave(FullEntryDto entry) {
-        FlatEntryDto updatedEntry = entryService.update(entry);
+        try {
+            entryService.update(entry);
+
+        } catch (UniqueConstraintViolationException e) {
+            handleRuntimeError(e);
+            return;
+        }
+        
         updateTableViewPage(entry.getBook().getId());      
+    }
+
+    private void handleRuntimeError(Throwable e) {
+        Alert alert = new Alert(AlertType.ERROR);
+        alert.setContentText(e.getMessage());
+        alert.showAndWait();
     }
 
     @FXML

@@ -12,11 +12,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.scrvrdn.inventory.TestDataUtil;
 import io.github.scrvrdn.inventory.dto.Book;
 import io.github.scrvrdn.inventory.dto.Person;
 import io.github.scrvrdn.inventory.dto.Publisher;
+import io.github.scrvrdn.inventory.exceptions.BookNotFoundException;
+import io.github.scrvrdn.inventory.exceptions.UniqueConstraintViolationException;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -106,6 +109,25 @@ public class BookRepositoryIntegrationTest {
     }
 
     @Test
+    public void testThatThrowsUniqueConstrainedViolationExceptionWithDuplicateIsbn() {
+        Book book1 = TestDataUtil.createTestBook();
+        underTest.create(book1);
+        Book book2 = TestDataUtil.createTestBook2();
+        underTest.create(book2);
+
+        book2.setIsbn10(book1.getIsbn10());
+        assertThatThrownBy(() -> underTest.update(book2))
+            .isInstanceOf(UniqueConstraintViolationException.class)
+            .hasMessageContaining("A book with this ISBN-10 already exists.");
+        
+        book1.setIsbn13(book2.getIsbn13());
+        assertThatThrownBy(() -> underTest.update(book1))
+            .isInstanceOf(UniqueConstraintViolationException.class)
+            .hasMessageContaining("A book with this ISBN-13 already exists.");       
+
+    }
+
+    @Test
     public void testThatBookCanBeDeleted() {
         Book book = TestDataUtil.createTestBook();
         underTest.create(book);
@@ -113,6 +135,13 @@ public class BookRepositoryIntegrationTest {
         underTest.delete(book.getId());
         Optional<Book> result = underTest.findById(book.getId());
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    public void testThatBookDeletionThrowsExceptionWhenBookNotFound() {
+        assertThatThrownBy(() -> underTest.delete(1L))
+            .isInstanceOf(BookNotFoundException.class)
+            .hasMessageContaining("Book with Id 1 not found.");
     }
 
     @Test

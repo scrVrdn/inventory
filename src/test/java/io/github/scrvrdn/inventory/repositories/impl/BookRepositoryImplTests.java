@@ -131,10 +131,14 @@ public class BookRepositoryImplTests {
     @Test
     public void testThatDeleteGeneratesCorrectSql() {
         long id = 1L;
-        underTest.delete(id);
         String expectedSql = """
-                DELETE FROM "books" WHERE "id" = ?;
-                """;
+                    DELETE FROM "books" WHERE "id" = ?;
+                    """;
+
+        when(jdbcTemplate.update(expectedSql, id)).thenReturn(1);
+
+        underTest.delete(id);
+        
         verify(jdbcTemplate).update(expectedSql, id);
     }
 
