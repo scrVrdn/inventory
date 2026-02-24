@@ -12,6 +12,7 @@ import io.github.scrvrdn.inventory.exceptions.BookNotFoundException;
 import io.github.scrvrdn.inventory.exceptions.UniqueConstraintViolationException;
 import io.github.scrvrdn.inventory.services.facade.EntryService;
 import io.github.scrvrdn.inventory.controls.DetailsPane;
+import io.github.scrvrdn.inventory.controls.TableCellWithTooltip;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -100,13 +101,26 @@ public class MainController {
 
     private void createTable() {
         id.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().bookId()));
-        authors.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().authors()));
-        title.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().bookTitle()));
-        editors.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().editors()));
-        publisher.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().publisher()));
-        year.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().bookYear()));
-        shelfMark.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().shelfMark()));
+        id.setCellFactory(col -> new TableCellWithTooltip<>());
 
+        authors.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().authors()));
+        authors.setCellFactory(col -> new TableCellWithTooltip<>());
+
+        title.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().bookTitle()));
+        title.setCellFactory(col -> new TableCellWithTooltip<>());
+
+        editors.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().editors()));
+        editors.setCellFactory(col -> new TableCellWithTooltip<>());
+
+        publisher.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().publisher()));
+        publisher.setCellFactory(col -> new TableCellWithTooltip<>());
+
+        year.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().bookYear()));
+        year.setCellFactory(col -> new TableCellWithTooltip<>());
+
+        shelfMark.setCellValueFactory(cellData -> new ReadOnlyObjectWrapper<>(cellData.getValue().shelfMark()));
+        shelfMark.setCellFactory(col -> new TableCellWithTooltip<>());
+        
         table.setItems(entryRows);
         table.setPlaceholder(new Label("No entries"));
         
@@ -343,7 +357,7 @@ public class MainController {
                 // refreshTable();
 
         } catch (Exception e) {
-            handleRuntimeError(e);
+            handleRuntimeException(e);
         }
     }
 
@@ -412,7 +426,7 @@ public class MainController {
                 }
 
             } catch (BookNotFoundException e) {
-                handleRuntimeError(e);
+                handleRuntimeException(e);
             }
             
             refreshTable();
@@ -452,14 +466,14 @@ public class MainController {
             entryService.update(entry);
 
         } catch (UniqueConstraintViolationException e) {
-            handleRuntimeError(e);
+            handleRuntimeException(e);
             return;
         }
         
         updateTableViewPage(entry.getBook().getId());      
     }
 
-    private void handleRuntimeError(Throwable e) {
+    private void handleRuntimeException(Exception e) {
         Alert alert = new Alert(AlertType.ERROR);
         alert.setContentText(e.getMessage());
         alert.showAndWait();
@@ -467,6 +481,6 @@ public class MainController {
 
     @FXML
     private void handleExit() {
-        Platform.exit();;
+        Platform.exit();
     }
 }
