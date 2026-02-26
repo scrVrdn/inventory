@@ -1,5 +1,7 @@
 package io.github.scrvrdn.inventory.controller;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -11,6 +13,7 @@ import io.github.scrvrdn.inventory.dto.PageRequest;
 import io.github.scrvrdn.inventory.exceptions.BookNotFoundException;
 import io.github.scrvrdn.inventory.exceptions.UniqueConstraintViolationException;
 import io.github.scrvrdn.inventory.services.facade.EntryService;
+import io.github.scrvrdn.inventory.services.utility.BackupService;
 import io.github.scrvrdn.inventory.controls.DetailsPane;
 import io.github.scrvrdn.inventory.controls.TableCellWithTooltip;
 import io.github.scrvrdn.inventory.dto.FlatEntryDto;
@@ -25,6 +28,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
@@ -33,6 +37,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TableColumn.SortType;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
 
@@ -41,6 +47,7 @@ public class MainController {
     private static final int SEARCH_DELAY = 600;
 
     private final EntryService entryService;
+    private final BackupService backupService;
 
     @FXML private TableView<FlatEntryDto> table;
 
@@ -83,8 +90,9 @@ public class MainController {
     private int skipPages = 5;
     private ObservableList<FlatEntryDto> entryRows = FXCollections.observableArrayList();
 
-    public MainController(final EntryService entryService, DetailsPane detailsPaneController) {
+    public MainController(final EntryService entryService, final BackupService backupService, DetailsPane detailsPaneController) {
         this.entryService = entryService;
+        this.backupService = backupService;
         this.detailsPane = detailsPaneController;
     }
 
@@ -477,6 +485,62 @@ public class MainController {
         Alert alert = new Alert(AlertType.ERROR);
         alert.setContentText(e.getMessage());
         alert.showAndWait();
+    }
+
+    @FXML
+    private void handleCreateBackup() {
+            try {
+                String result = backupService.createBackup();
+                Alert alert = new Alert(AlertType.INFORMATION);
+                alert.setHeaderText(result);
+                alert.showAndWait();
+
+            } catch (Exception e) {
+                handleRuntimeException(e);
+            }
+    }
+
+    @FXML
+    private void handleRevertToBackup() {
+        boolean confirmed = confirmBackupImport();
+        if (!confirmed) return;
+        try {
+            File selectedBackup = selectBackup();
+            if (selectedBackup != null) {
+                String result = backupService.revertToBackup(selectedBackup.toPath());
+                Alert alert = new Alert(AlertType.INFORMATION);
+                alert.setHeaderText(result);
+                alert.showAndWait();
+                goToFirstPage();
+            }
+            
+        } catch (Exception e) {
+            handleRuntimeException(e);
+        }        
+               
+    }
+
+    private boolean confirmBackupImport() {
+        Alert warning = new Alert(AlertType.WARNING);
+        warning.setHeaderText("Replace current database?");
+        warning.setContentText("""
+                This will PERMANENTLY DELETE all your current data and replace it with the selected backup. 
+                Current data cannot be recovered after this operation.
+                Are you sure you want to continue?
+                """);
+        warning.getButtonTypes().setAll(ButtonType.OK, ButtonType.CANCEL);
+        Optional<ButtonType> result = warning.showAndWait();
+        return result.isPresent() && result.get() == ButtonType.OK;
+    }
+
+    private File selectBackup() throws IOException {
+        FileChooser fileChooser = new FileChooser();
+        ExtensionFilter ex = new ExtensionFilter("Backup Files", "*.bak");
+        fileChooser.setTitle("Import Backup File");
+        fileChooser.getExtensionFilters().add(ex);
+        fileChooser.setInitialDirectory(backupService.getBackupDir().toFile());
+        File selectedBackup = fileChooser.showOpenDialog(null);
+        return selectedBackup;
     }
 
     @FXML

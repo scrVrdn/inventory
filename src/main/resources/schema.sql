@@ -1,8 +1,15 @@
--- DROP TABLE IF EXISTS "books";
--- DROP TABLE IF EXISTS "persons";
--- DROP TABLE IF EXISTS "publishers";
--- DROP TABLE IF EXISTS "book_person";
--- DROP TABLE IF EXISTS "published";
+CREATE TABLE IF NOT EXISTS "app_meta"(
+    "id" INTEGER CHECK("id" = 1),
+    "app_id" TEXT NOT NULL,
+    "schema_version" INTEGER NOT NULL,
+    "created_at" TEXT NOT NULL,
+    PRIMARY KEY("id")
+);   
+
+              
+INSERT OR IGNORE INTO "app_meta" ("id", "app_id", "schema_version", "created_at")
+VALUES (1, 'io.github.scrvrdn.inventory', 1, CURRENT_TIMESTAMP);
+                 
 
 CREATE TABLE IF NOT EXISTS "books" (
     "id" INTEGER,

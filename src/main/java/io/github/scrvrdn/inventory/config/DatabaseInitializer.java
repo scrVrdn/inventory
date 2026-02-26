@@ -25,6 +25,21 @@ public class DatabaseInitializer {
 
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute("""
+                        CREATE TABLE IF NOT EXISTS "app_meta"(
+                            "id" INTEGER CHECK("id" = 1),
+                            "app_id" TEXT NOT NULL,
+                            "schema_version" INTEGER NOT NULL,
+                            "created_at" TEXT NOT NULL,
+                            PRIMARY KEY("id")
+                        );
+                        """);
+                
+                stmt.execute("""
+                        INSERT OR IGNORE INTO "app_meta" ("id", "app_id", "schema_version", "created_at")
+                        VALUES (1, 'io.github.scrvrdn.inventory', 1, CURRENT_TIMESTAMP);
+                        """);
+
+                stmt.execute("""
                         CREATE TABLE IF NOT EXISTS "books" (
                             "id" INTEGER,
                             "title" TEXT,

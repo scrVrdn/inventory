@@ -23,6 +23,8 @@
         <MenuBar VBox.vgrow="NEVER">
             <menus>
                 <Menu text="File">
+                    <MenuItem text="Revert to Backup" onAction="#handleRevertToBackup"/>
+                    <MenuItem text="Create Backup" onAction="#handleCreateBackup"/>
                     <MenuItem text="Exit" onAction="#handleExit"/>
                 </Menu>
             </menus>
