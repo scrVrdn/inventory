@@ -51,7 +51,7 @@ public class BookRepositoryIntegrationTest {
 
     @BeforeEach
     public void setup() {
-        JdbcTestUtils.deleteFromTables(jdbcTemplate, "books", "persons", "publishers", "book_person", "published");
+        JdbcTestUtils.deleteFromTables(jdbcTemplate, "books", "persons", "publishers");
     }
 
 
@@ -151,9 +151,9 @@ public class BookRepositoryIntegrationTest {
 
         Person author = TestDataUtil.createTestPerson();
         personRepository.create(author);
-
+       
         bookPersonRepository.assignAuthorsToBook(book.getId(), List.of(author.getId()));
-
+        
         underTest.delete(book.getId());
 
         List<Person> result = bookPersonRepository.findAuthorsByBookId(book.getId());

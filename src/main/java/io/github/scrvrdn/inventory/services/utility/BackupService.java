@@ -5,7 +5,8 @@ import java.nio.file.Path;
 
 public interface BackupService {
 
-    String createBackup();
+    String createBackup() throws Exception;
+    String createBackup(Path backupLocation) throws Exception;
     String revertToBackup(Path backupDir) throws Exception;
     Path getBackupDir() throws IOException;
 }

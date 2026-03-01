@@ -4,11 +4,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.function.Supplier;
 
 import javax.sql.DataSource;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
@@ -16,6 +20,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 public class InventoryConfig {
 
     @Bean
+    @Profile("prod")
     public DataSource dataSource() throws IOException {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
 
@@ -34,5 +39,10 @@ public class InventoryConfig {
         jdbcTemplate.execute("PRAGMA foreign_keys = ON");
 
         return jdbcTemplate;
+    }
+
+    @Bean
+    public Supplier<String> backUpFileNameSupplier() {
+        return () -> "backup-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".db.bak";
     }
 }

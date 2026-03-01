@@ -37,7 +37,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.TableColumn.SortType;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.util.Duration;
 import javafx.util.converter.IntegerStringConverter;
@@ -48,6 +50,8 @@ public class MainController {
 
     private final EntryService entryService;
     private final BackupService backupService;
+
+    @FXML private VBox rootPane;
 
     @FXML private TableView<FlatEntryDto> table;
 
@@ -536,10 +540,14 @@ public class MainController {
     private File selectBackup() throws IOException {
         FileChooser fileChooser = new FileChooser();
         ExtensionFilter ex = new ExtensionFilter("Backup Files", "*.bak");
+
         fileChooser.setTitle("Import Backup File");
         fileChooser.getExtensionFilters().add(ex);
         fileChooser.setInitialDirectory(backupService.getBackupDir().toFile());
-        File selectedBackup = fileChooser.showOpenDialog(null);
+        
+        Window owner = rootPane.getScene().getWindow();
+        File selectedBackup = fileChooser.showOpenDialog(owner);
+        
         return selectedBackup;
     }
 

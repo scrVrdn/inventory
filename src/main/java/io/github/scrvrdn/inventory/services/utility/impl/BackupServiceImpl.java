@@ -1,48 +1,52 @@
 package io.github.scrvrdn.inventory.services.utility.impl;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.function.Supplier;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import io.github.scrvrdn.inventory.services.utility.BackupService;
+import io.github.scrvrdn.inventory.services.utility.BackupValidationService;
 
 
 @Service
 public class BackupServiceImpl implements BackupService {
 
     private final JdbcTemplate jdbcTemplate;
-    
-    @Value("${app.db.meta.app-id}")
-    private String expectedAppId;
+    private final BackupValidationService backupValidationService;
+    private final Supplier<String> backupFileNameSupplier;
 
-    @Value("${app.db.meta.schema-version}")
-    private Integer expectedSchemaVersion;
-
-    public BackupServiceImpl(final JdbcTemplate jdbcTemplate) {
+    public BackupServiceImpl(final JdbcTemplate jdbcTemplate, final BackupValidationService backupValidationService, final Supplier<String> backupFileNameSupplier) {
         this.jdbcTemplate = jdbcTemplate;
+        this.backupValidationService = backupValidationService;
+        this.backupFileNameSupplier = backupFileNameSupplier;
     }
     
     @Override
-    public String createBackup() {
-            try {
-                Path backupDir = getBackupDir().resolve("backup-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".db.bak");
+    public String createBackup() throws Exception {
+        Path backupLocation = getBackupDir();
+        return createBackup(backupLocation);
+    }
+
+    @Override
+    public String createBackup(Path backupLocation) throws Exception {
+        try {
+                Path backupDir = backupLocation.resolve(backupFileNameSupplier.get());
                 
-                runIntegrityCheck();
-                jdbcTemplate.execute("VACUUM INTO '" + backupDir.toAbsolutePath() + "';");
-                checkBackupIntegrity(backupDir);
+                boolean isValid = backupValidationService.runIntegrityCheck();
+                if (!isValid) return "Backup failed: live DB corrupted";
+
+                jdbcTemplate.execute("VACUUM INTO '" + backupDir.toString() + "';");
+
+                boolean backupIsValid = backupValidationService.checkBackupIntegrity(backupDir);
+                
+                if (!backupIsValid) return "Created Backup file is corrupt";
 
                 return "Backup successful: " + backupDir.getFileName();
 
@@ -50,14 +54,7 @@ public class BackupServiceImpl implements BackupService {
                 e.printStackTrace();
                 throw new RuntimeException(e);
             }
-        
-    }
 
-    private void runIntegrityCheck() {
-        String result = jdbcTemplate.queryForObject("PRAGMA integrity_check", String.class);
-        if (!result.equals("ok")) {
-            throw new IllegalStateException("DB corrupt: " + result);
-        }
     }
 
     public Path getBackupDir() throws IOException {
@@ -65,28 +62,16 @@ public class BackupServiceImpl implements BackupService {
         Files.createDirectories(backupDir);
         return backupDir;
     }
-
-    private void checkBackupIntegrity(Path backupDir) throws SQLException {
-        String result;
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + backupDir.toAbsolutePath());
-            Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery("PRAGMA integrity_check");
-            result = rs.next() ? rs.getString(1) : "unknown";
-        }
-
-        if (result == null || !result.equals("ok")) throw new IllegalStateException("Backup corrupt: " + result);
-    }
     
     @Override
-    public String revertToBackup(Path backupDir) {
+    public String revertToBackup(Path backupDir) throws Exception {
         
-        try {
-            checkIfValidSQLiteFile(backupDir);
-            checkBackupIntegrity(backupDir);
+        try {            
+            boolean isValid = backupValidationService.validateBackup(backupDir);
+            if (!isValid) return "Backup file is corrupt or not supported";
 
-            String attachSql = String.format("ATTACH DATABASE '%s' AS backupdb;", backupDir.toAbsolutePath().toString());
+            String attachSql = String.format("ATTACH DATABASE '%s' AS backupdb;", backupDir.toString());
             jdbcTemplate.execute(attachSql);
-            validateMetaData(backupDir);
 
             jdbcTemplate.execute((Connection conn) -> {
                 
@@ -102,43 +87,14 @@ public class BackupServiceImpl implements BackupService {
                 return null;
             });
 
-            runIntegrityCheck();
+            boolean validAfterIntegrityCheck = backupValidationService.runIntegrityCheck();
+            if (!validAfterIntegrityCheck) return "Live DB corrupt after reverting to Backup";
             
             return "Successfully reverted to backup.";
-
 
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        
     }
-
-    private void checkIfValidSQLiteFile(Path backupDir) throws Exception {
-        
-            byte[] header = Files.newInputStream(backupDir).readNBytes(16);
-            String headerStr = new String(header, StandardCharsets.UTF_8);
-            if (!headerStr.startsWith("SQLite format 3")) {
-                throw new IllegalArgumentException("This backup file is not supported.");
-            }
-    }
-
-    private void validateMetaData(Path backupDir) {
-        String sql = """
-               SELECT CASE
-                    WHEN "app_id" = ? AND "schema_version" = ?
-                    THEN 1
-                    ELSE 0
-                END AS "is_valid_backup"
-                FROM backupdb."app_meta" WHERE "id" = 1;                
-                """;
-        try {
-            Integer result = jdbcTemplate.queryForObject(sql, Integer.class, expectedAppId, expectedSchemaVersion);
-            if (result != 1) throw new IllegalArgumentException();
-        } catch (Exception e) {
-            throw new IllegalArgumentException("This is not a valid backup file.");
-        }
-        
-    }
-
 }

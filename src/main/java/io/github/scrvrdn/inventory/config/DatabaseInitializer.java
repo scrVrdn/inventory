@@ -1,17 +1,26 @@
 package io.github.scrvrdn.inventory.config;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 import javax.sql.DataSource;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 
 @Service
 public class DatabaseInitializer {
+
+    @Value("${app.db.meta.app-id}")
+    private String appId;
+
+    @Value("${app.db.meta.schema-version}")
+    private Integer schemaVersion;
+
     private final DataSource dataSource;
 
     public DatabaseInitializer(final DataSource dataSource) {
@@ -20,8 +29,11 @@ public class DatabaseInitializer {
 
     @PostConstruct
     public void init() {
+        
         try (Connection conn = dataSource.getConnection()) {
             conn.setAutoCommit(false);
+
+            
 
             try (Statement stmt = conn.createStatement()) {
                 stmt.execute("""
@@ -33,11 +45,19 @@ public class DatabaseInitializer {
                             PRIMARY KEY("id")
                         );
                         """);
-                
-                stmt.execute("""
+
+                String preparedSql = """
                         INSERT OR IGNORE INTO "app_meta" ("id", "app_id", "schema_version", "created_at")
-                        VALUES (1, 'io.github.scrvrdn.inventory', 1, CURRENT_TIMESTAMP);
-                        """);
+                        VALUES (1, ?, ?, CURRENT_TIMESTAMP);
+                    """;
+
+                try (PreparedStatement ps = conn.prepareStatement(preparedSql)) {
+
+                    ps.setString(1, appId);
+                    ps.setInt(2, schemaVersion);
+                    ps.executeUpdate();
+                }
+                
 
                 stmt.execute("""
                         CREATE TABLE IF NOT EXISTS "books" (
