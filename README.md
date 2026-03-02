@@ -16,22 +16,23 @@ git clone https://github.com/scrVrdn/inventory.git
 cd inventory
 ./mvnw spring-boot:run
 ```
+(On first startup, the app creates its database in ```~/.inventory/``` (your user home directory).)
 
 ## What it does
 
-A Spring Boot desktop app for managing book collections (for now, but easily expandable to other item types)
-
-* a full entry contains information on book title, author(s), editor(s), publisher, year of publication, ISBN-10/ISBN-13 and shelf mark
+A Spring Boot desktop app for managing book collections (for now, but easily expandable to other item types), intended for private collections where the number of items doesn't exceed ~10k 
 
 * full CRUD functionality
 
+* details pane for editing entries: a full entry holds information on book title, author(s), editor(s), publisher, year of publication, ISBN-10/ISBN-13 and shelf mark
+
 * read-optimized view of whole collection via JdbcTemplate + complex joins
 
-* custom pagination with random access page indices
+* custom pagination controls with random access page indices for targeted perusal of the collection
 
-* server-side sorting and filtering (coming soon)
+* server-side sorting and filtering
 
-* details pane for editing items
+* full backup functionality
 
 
 
@@ -42,15 +43,13 @@ A Spring Boot desktop app for managing book collections (for now, but easily exp
 
 #### Key Decisions
 
-* MVC pattern
+* for proper encapsulation, the (fxml) controller class has only direct access to the facade service EntryService which orchestrates the domain services und the backup services
 
-* controller has only access to the facade service EntryService which orchestrates the domain services
-
-* for a quick and efficient loading of complete entries EntryService bypasses the domain services and calls the (read only) EntryViewRepository; this way it obtains the data via a single query
+* For a quick and efficient loading of complete entries, EntryService bypasses the domain services and calls the (read only) EntryViewRepository directly; this way it obtains the requested data via a single query (+ a quick lookup of the total number of entries in a dedicated 1-row table) (without filtering) or two queries (with filtering)
 
 * No JPA/Hibernate, instead JdbcTemplate for database access: no ORM overhead, SQLite optimized
 
-* lazy approach to updating for user convenience: updating persons or publishers results in creating a new table entry (or if an identical entry already exists, this will be used instead); then at the next start up of the app all unused persons or publishers (i. e. those with no association with a book_id) will be deleted from the database via the cleanup services
+* Lazy approach to updating for user convenience: updating persons or publishers results in creating a new table entry (or if an identical entry already exists, this will be used instead); then at the next start up of the app all unused persons or publishers (i. e. those with no association with a book_id) will be deleted from the database via the cleanup services. No need for multiple forms to manage persons and publishers.
 
 
 ## Tech Stack

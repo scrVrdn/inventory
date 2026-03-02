@@ -268,15 +268,16 @@ public class MainController {
 
     private void calculateTotalPageCount() {
         totalNumberOfRows = entryService.numberOfRows();
-        totalPageCount = (totalNumberOfRows + itemsPerPage.intValue() - 1) / itemsPerPage.intValue();
+        totalPageCount = Math.max((totalNumberOfRows + itemsPerPage.intValue() - 1) / itemsPerPage.intValue(), 1);
         totalPageCountLabel.setText("/ " + String.valueOf(totalPageCount));
     }
-
+    
     private void updateTableViewPage() {
-         getEntries().thenAccept(data -> Platform.runLater(() -> {
+        
+            getEntries().thenAccept(data -> Platform.runLater(() -> {
                 entryRows.setAll(data);
                 refreshTable();
-        }));
+            }));
     }
 
     private void updateTableViewPage(long bookId) {
@@ -322,9 +323,9 @@ public class MainController {
         currentPageIndex = 0;
         updateTableViewPage();
     }
-
+   
     @FXML
-    private void goToNextPage() {
+    public void goToNextPage() {
         currentPageIndex = Math.min(currentPageIndex + 1, totalPageCount - 1);
         updateTableViewPage();
     }
@@ -343,38 +344,13 @@ public class MainController {
 
     @FXML
     private void handleAddNewEntryButton() {
-        // boolean newEntryOnNewPage = lastPageIsFull();
-        // boolean currentPageIsNotLastPage = !onLastPage();
-        
         try {
            FlatEntryDto entry = entryService.createEmptyEntry().orElseThrow();
            updateTableViewPage(entry.bookId());
-                // calculateTotalPageCount();
-
-                // if (newEntryOnNewPage) {
-                //     entryRows.clear();
-                //     currentPageIndex = totalPageCount - 1;
-                //     entryRows.add(entry);
-                // } else {
-                //     if (currentPageIsNotLastPage) {
-                //         goToLastPage();
-                //     } else {
-                //         entryRows.add(entry);
-                //     }
-                // }
-                
-                // table.getSelectionModel().selectLast();
-                // table.scrollTo(table.getSelectionModel().getSelectedIndex());
-               
-                // refreshTable();
 
         } catch (Exception e) {
             handleRuntimeException(e);
         }
-    }
-
-    private boolean lastPageIsFull() {
-        return totalNumberOfRows % itemsPerPage.intValue() == 0;
     }
 
     private boolean onLastPage() {
@@ -425,7 +401,6 @@ public class MainController {
                 } else {
                     entryRows.remove(selected);
                     if (!toDeleteIsOnLastPage) {
-                        // fillTable();
                         updateTableViewPage();
                     }
                 }
@@ -445,18 +420,6 @@ public class MainController {
         }
     }
 
-    private void fillTable() {
-        FlatEntryDto lastEntry = entryRows.getLast();
-        // Object sortKey = lastEntry.bookTitle();
-        // if (!table.getSortOrder().isEmpty()) {
-        //     TableColumn<FlatEntryDto, ?> col = table.getSortOrder().get(0);
-        //     sortKey = col.getCellData(entryRows.size() - 1);
-        // }
-
-        Optional<FlatEntryDto> nextEntry = entryService.getNextFlatEntryDtoAfterBookId(lastEntry.bookId());
-        if (nextEntry.isPresent()) entryRows.addLast(nextEntry.get());
-    }
-
     @FXML
     private void handleItemsPerPageSelection() {
         updateTotalPageCount();
@@ -464,7 +427,7 @@ public class MainController {
     }
 
     private void updateTotalPageCount() {
-         totalPageCount = (totalNumberOfRows + itemsPerPage.intValue() - 1) / itemsPerPage.intValue();
+         totalPageCount = Math.max((totalNumberOfRows + itemsPerPage.intValue() - 1) / itemsPerPage.intValue(), 1);
     }
 
     @FXML

@@ -27,7 +27,7 @@ public class InventoryConfig {
         dataSource.setDriverClassName("org.sqlite.JDBC");
         Path dbPath = Paths.get(System.getProperty("user.home"), ".inventory", "database.db");
         Files.createDirectories(dbPath.getParent());
-        dataSource.setUrl("jdbc:sqlite:" + dbPath.toAbsolutePath());
+        dataSource.setUrl("jdbc:sqlite:" + dbPath.toString());
         
         return dataSource;
     }
