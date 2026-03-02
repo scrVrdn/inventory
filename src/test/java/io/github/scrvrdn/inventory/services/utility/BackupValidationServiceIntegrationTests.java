@@ -84,13 +84,13 @@ public class BackupValidationServiceIntegrationTests {
     @Test
     public void testThatRecognizesInvalidBackupFiles() throws Exception {
         File notASqliteFile = File.createTempFile("notASqliteFile", "bak");
-        Path noSqliteBackupDir = tempDir.resolve(notASqliteFile.toString());
+        Path noSqliteBackupPath = tempDir.resolve(notASqliteFile.toString());
 
         Path notAValidBackupFile = tempDir.resolve("notAValidBackupFile.db.bak");
         String validSqliteButInvalidBackupFile = "jdbc:sqlite:" + notAValidBackupFile.toString();
         try (Connection conn = DriverManager.getConnection(validSqliteButInvalidBackupFile)) {}
 
-        boolean noSqliteResult = underTest.validateBackup(noSqliteBackupDir);
+        boolean noSqliteResult = underTest.validateBackup(noSqliteBackupPath);
         boolean noValidBackupFileResult = underTest.validateBackup(notAValidBackupFile);
 
         assertThat(noSqliteResult).isFalse();

@@ -493,15 +493,15 @@ public class MainController {
 
     @FXML
     private void handleCreateBackup() {
-            try {
-                String result = backupService.createBackup();
-                Alert alert = new Alert(AlertType.INFORMATION);
-                alert.setHeaderText(result);
-                alert.showAndWait();
+        try {
+            String result = backupService.createBackup();
+            Alert alert = new Alert(AlertType.INFORMATION);
+            alert.setHeaderText(result);
+            alert.showAndWait();
 
-            } catch (Exception e) {
-                handleRuntimeException(e);
-            }
+        } catch (Exception e) {
+            handleRuntimeException(e);
+        }
     }
 
     @FXML

@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.function.Supplier;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -37,23 +38,23 @@ public class BackupServiceImpl implements BackupService {
     @Override
     public String createBackup(Path backupLocation) throws Exception {
         try {
-                Path backupDir = backupLocation.resolve(backupFileNameSupplier.get());
-                
-                boolean isValid = backupValidationService.runIntegrityCheck();
-                if (!isValid) return "Backup failed: live DB corrupted";
+            Path backupDir = backupLocation.resolve(backupFileNameSupplier.get());
+            
+            boolean isValid = backupValidationService.runIntegrityCheck();
+            if (!isValid) return "Backup failed: live DB corrupted";
 
-                jdbcTemplate.execute("VACUUM INTO '" + backupDir.toString() + "';");
+            jdbcTemplate.execute("VACUUM INTO '" + backupDir.toString() + "';");
 
-                boolean backupIsValid = backupValidationService.checkBackupIntegrity(backupDir);
-                
-                if (!backupIsValid) return "Created Backup file is corrupt";
+            boolean backupIsValid = backupValidationService.checkBackupIntegrity(backupDir);
+            
+            if (!backupIsValid) return "Created Backup file is corrupt";
 
-                return "Backup successful: " + backupDir.getFileName();
+            return "Backup successful: " + backupDir.getFileName();
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
 
     }
 
@@ -64,29 +65,36 @@ public class BackupServiceImpl implements BackupService {
     }
     
     @Override
-    public String revertToBackup(Path backupDir) throws Exception {
+    public String revertToBackup(Path backupPath) throws Exception {
         
         try {            
-            boolean isValid = backupValidationService.validateBackup(backupDir);
+            boolean isValid = backupValidationService.validateBackup(backupPath);
             if (!isValid) return "Backup file is corrupt or not supported";
 
-            String attachSql = String.format("ATTACH DATABASE '%s' AS backupdb;", backupDir.toString());
-            jdbcTemplate.execute(attachSql);
-
+            String attachSql = String.format("ATTACH DATABASE '%s' AS backupdb;", backupPath.toString());
+            
             jdbcTemplate.execute((Connection conn) -> {
-                
-                ResultSet tables = conn.createStatement().executeQuery("SELECT name FROM backupdb.sqlite_master WHERE type = 'table';");
+                try (Statement metaStmt = conn.createStatement();
+                    Statement readStmt = conn.createStatement();
+                    Statement writeStmt = conn.createStatement()) {
 
-                while (tables.next()) {
-                    String tableName = tables.getString("name");
-                    conn.createStatement().execute("DELETE FROM " + tableName);
-                    conn.createStatement().execute("INSERT INTO " + tableName + " SELECT * FROM backupdb." + tableName);
+                    metaStmt.execute(attachSql);
+
+                    try (ResultSet tables = readStmt.executeQuery("SELECT name FROM backupdb.sqlite_master WHERE type = 'table';")) {
+                        
+                        while (tables.next()) {
+                            String tableName = tables.getString("name");
+                            writeStmt.execute("DELETE FROM " + tableName);
+                            writeStmt.execute("INSERT INTO " + tableName + " SELECT * FROM backupdb." + tableName);
+                        }
+                    }
+
+                    metaStmt.execute("DETACH DATABASE backupdb;");
                 }
-
-                conn.createStatement().execute("DETACH DATABASE backupdb;");
+                
                 return null;
             });
-
+            
             boolean validAfterIntegrityCheck = backupValidationService.runIntegrityCheck();
             if (!validAfterIntegrityCheck) return "Live DB corrupt after reverting to Backup";
             

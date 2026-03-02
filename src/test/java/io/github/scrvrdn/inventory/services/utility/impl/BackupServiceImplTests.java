@@ -80,11 +80,8 @@ public class BackupServiceImplTests {
         String result = underTest.revertToBackup(expectedBackupPath);
         
         assertThat(result).isEqualTo("Successfully reverted to backup.");
-        
-        String expectedAttachSql = "ATTACH DATABASE '" + expectedBackupPath.toAbsolutePath().toString() + "' AS backupdb;";       
 
         verify(validationService).validateBackup(expectedBackupPath);
-        verify(jdbcTemplate).execute(expectedAttachSql);
         verify(jdbcTemplate).execute(any(ConnectionCallback.class));
         verify(validationService).runIntegrityCheck();
 

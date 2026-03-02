@@ -56,21 +56,23 @@ public class BackupServiceIntegrationTests {
         jdbcTemplate.update(insertSql);
 
         String backupFileName = underTest.createBackup(tempDir).substring("Backup successful: ".length());
+        
         try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + tempDir.resolve(backupFileName));
             Statement stmt = conn.createStatement()) {
-            
-            ResultSet rs = stmt.executeQuery("SELECT title FROM books WHERE id = 1;");
-            String result = rs.getString("title");
-            assertThat(result).isEqualTo("SUCCESS");
+
+            try (ResultSet rs = stmt.executeQuery("SELECT title FROM books WHERE id = 1;")) {
+                String result = rs.next() ? rs.getString("title") : "FAILURE";
+                assertThat(result).isEqualTo("SUCCESS");
+            }
         }
 
     }
 
     @Test
     public void testThatSyncsFromBackup() throws Exception {
-        Path backupDir = setupBackupDb();
+        Path backupPath = setupBackupDb();
 
-        String result1 = underTest.revertToBackup(backupDir);
+        String result1 = underTest.revertToBackup(backupPath);
         String result2 = jdbcTemplate.queryForObject("SELECT title FROM books WHERE id = 1;", String.class);
 
         assertThat(result1).isEqualTo("Successfully reverted to backup.");
@@ -79,20 +81,19 @@ public class BackupServiceIntegrationTests {
     }
 
     private Path setupBackupDb() throws Exception {
-        Path backupDir = tempDir.resolve("test.db.bak");
-        String url = "jdbc:sqlite:" + backupDir.toString();
+        Path backupPath = tempDir.resolve("test.db.bak");
+        String url = "jdbc:sqlite:" + backupPath.toString();
 
         try (Connection conn = DriverManager.getConnection(url)) {
             try (Statement stmt = conn.createStatement()) {
-                stmt.executeUpdate(
-                        """
-                            CREATE TABLE IF NOT EXISTS "app_meta"(
-                                "id" INTEGER CHECK("id" = 1),
-                                "app_id" TEXT NOT NULL,
-                                "schema_version" INTEGER NOT NULL,
-                                "created_at" TEXT NOT NULL,
-                                PRIMARY KEY("id")
-                            )
+                stmt.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS "app_meta"(
+                            "id" INTEGER CHECK("id" = 1),
+                            "app_id" TEXT NOT NULL,
+                            "schema_version" INTEGER NOT NULL,
+                            "created_at" TEXT NOT NULL,
+                            PRIMARY KEY("id")
+                        );
                 """);
 
                 stmt.executeUpdate("""
@@ -122,9 +123,7 @@ public class BackupServiceIntegrationTests {
             }
         }
 
-        return backupDir;
-    }
-
-    
+        return backupPath;
+    }   
 
 }

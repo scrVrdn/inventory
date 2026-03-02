@@ -49,9 +49,11 @@ public class BackupValidationServiceImpl implements BackupValidationService {
 
     private boolean checkBackupIntegrity(Connection conn) throws SQLException {
         try (Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery("PRAGMA integrity_check");
-            String result = rs.next() ? rs.getString(1) : "unknown";
-            return result.equals("ok");
+
+            try (ResultSet rs = stmt.executeQuery("PRAGMA integrity_check")) {
+                String result = rs.next() ? rs.getString(1) : "unknown";
+                return result.equals("ok");
+            }
         }            
     }
 
@@ -69,8 +71,7 @@ public class BackupValidationServiceImpl implements BackupValidationService {
                 if (!metaDataIsValid) return false;
 
                 return true;
-            }
-            
+            }            
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -105,9 +106,11 @@ public class BackupValidationServiceImpl implements BackupValidationService {
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, expectedAppId);
             stmt.setInt(2, expectedSchemaVersion);
-            ResultSet rs = stmt.executeQuery();
-            Integer result = rs.getInt(1);
-            return result == 1;
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                Integer result = rs.next() ? rs.getInt(1) : 0;
+                return result == 1;
+            }
         }
     }
     
