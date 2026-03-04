@@ -43,7 +43,7 @@ A Spring Boot desktop app for managing book collections (for now, but easily exp
 
 #### Key Decisions
 
-* for proper encapsulation, the (fxml) controller class has only direct access to the facade service EntryService which orchestrates the domain services und the backup services
+* for proper encapsulation, the (fxml) controller class has only direct access to the BackupService and the facade service EntryService which orchestrates the domain services
 
 * For a quick and efficient loading of complete entries, EntryService bypasses the domain services and calls the (read only) EntryViewRepository directly; this way it obtains the requested data via a single query (+ a quick lookup of the total number of entries in a dedicated 1-row table) (without filtering) or two queries (with filtering)
 
